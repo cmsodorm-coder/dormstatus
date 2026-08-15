@@ -836,40 +836,45 @@
     }
 
     async function submitBulkStatusUpdates() {
-      const updates = activeRoomsData
-        .filter(item => item.isChecked && item.newStatus)
-        .map(item => ({ id: item.id, newStatus: item.newStatus }));
+  const updates = activeRoomsData
+    .filter(item => item.isChecked && item.newStatus)
+    .map(item => ({ id: item.id, newStatus: item.newStatus }));
 
-      if (updates.length === 0) {
-        alert('กรุณาเลือกสถานะใหม่สำหรับรายการที่ติ๊กเลือกอย่างน้อย 1 รายการ');
-        return;
-      }
+  if (updates.length === 0) {
+    alert('กรุณาเลือกสถานะใหม่สำหรับรายการที่ติ๊กเลือกอย่างน้อย 1 รายการ');
+    return;
+  }
 
-      const btn = document.getElementById('btnSubmitBulk');
-      btn.disabled = true;
-      btn.textContent = 'กำลังบันทึก...';
+  const btn = document.getElementById('btnSubmitBulk');
+  btn.disabled = true;
+  btn.textContent = 'กำลังบันทึก...';
 
-      try {
-        if (!API_ENDPOINT.includes('YOUR_DEPLOYMENT_ID')) {
-          await fetch(API_ENDPOINT, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: {
-              'Content-Type': 'text/plain;charset=utf-8',
-            },
-            body: JSON.stringify({ dorm: currentDorm, updates: updates })
-          });
-        }
+  try {
+    const payload = JSON.stringify({ dorm: currentDorm, updates: updates });
 
-        alert(`อัปเดตสถานะสำเร็จ ${updates.length} รายการ`);
-        loadActiveStatusData();
-      } catch (err) {
-        alert(`เกิดข้อผิดพลาดในการอัปเดต: ${err.message}`);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'บันทึกการอัปเดตสถานะ';
-      }
+    const response = await fetch(API_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+      },
+      body: payload
+    });
+
+    const result = await response.json();
+
+    if (result && result.status === 'success') {
+      alert(`อัปเดตสถานะสำเร็จ ${updates.length} รายการ`);
+      await loadActiveStatusData();
+    } else {
+      throw new Error(result.message || 'การอัปเดตล้มเหลว');
     }
+  } catch (err) {
+    alert(`เกิดข้อผิดพลาดในการอัปเดต: ${err.message}`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'บันทึกการอัปเดตสถานะ';
+  }
+}
   </script>
 </body>
 </html>
