@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ระบบแจ้งสถานะซ่อมหอพัก สำหรับเจ้าหน้าที่</title>
+  <!-- Google Fonts: Sarabun -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
     :root {
       --primary: #1e3a8a;
@@ -289,9 +294,7 @@
       background-color: #f0fdf4;
     }
 
-    /* ==========================================================================
-       PERMANENT STATUS COLORS
-       ========================================================================== */
+    /* Status Badges */
     .status-badge {
       display: inline-flex;
       padding: 4px 10px;
@@ -311,7 +314,6 @@
     .status-reject        { background-color: #fee2e2; color: #991b1b; border-color: #fecaca; }
     .status-unclear       { background-color: #ffedd5; color: #9a3412; border-color: #fed7aa; }
     .status-default       { background-color: #f8fafc; color: #64748b; border-color: #e2e8f0; }
-    /* ========================================================================== */
 
     /* Bulk Action Bar */
     .bulk-bar {
@@ -560,7 +562,6 @@
     let currentDorm = "";
     let activeRoomsData = [];
 
-    // Sorting states: 'asc' or 'desc'
     let sortOrderTab1 = 'asc';
     let sortOrderTab2 = 'asc';
 
@@ -621,7 +622,7 @@
         } else {
           const res = await fetch(`${API_ENDPOINT}?dorm=${encodeURIComponent(currentDorm)}`);
           const fetched = await res.json();
-          activeRoomsData = fetched.map(item => ({ ...item, isChecked: false, newStatus: '' }));
+          activeRoomsData = (fetched || []).map(item => ({ ...item, isChecked: false, newStatus: '' }));
         }
 
         applyDashboardFilters();
@@ -631,7 +632,6 @@
       }
     }
 
-    /* Natural Sort comparison for Room Numbers */
     function compareRoomNumbers(a, b, order = 'asc') {
       const roomA = String(a.roomNumber || '');
       const roomB = String(b.roomNumber || '');
@@ -639,7 +639,6 @@
       return order === 'asc' ? res : -res;
     }
 
-    /* --- Tab 1: Dashboard Filter & Sort --- */
     function toggleDashboardSort() {
       sortOrderTab1 = sortOrderTab1 === 'asc' ? 'desc' : 'asc';
       document.getElementById('sortText1').textContent = sortOrderTab1 === 'asc' ? 'น้อย ➔ มาก' : 'มาก ➔ น้อย';
@@ -693,7 +692,6 @@
       `).join('');
     }
 
-    /* --- Tab 2: Bulk Update Filter & Sort --- */
     function toggleUpdateSort() {
       sortOrderTab2 = sortOrderTab2 === 'asc' ? 'desc' : 'asc';
       document.getElementById('sortText2').textContent = sortOrderTab2 === 'asc' ? 'น้อย ➔ มาก' : 'มาก ➔ น้อย';
@@ -717,7 +715,6 @@
         return textMatch && catMatch && statMatch;
       });
 
-      // Checked items always stay on top, then sort by room number
       filtered.sort((a, b) => {
         if (a.isChecked === b.isChecked) {
           return compareRoomNumbers(a, b, sortOrderTab2);
@@ -845,6 +842,10 @@
         if (!API_ENDPOINT.includes('YOUR_DEPLOYMENT_ID')) {
           await fetch(API_ENDPOINT, {
             method: 'POST',
+            mode: 'no-cors',
+            headers: {
+              'Content-Type': 'text/plain;charset=utf-8',
+            },
             body: JSON.stringify({ dorm: currentDorm, updates: updates })
           });
         }
@@ -861,6 +862,3 @@
   </script>
 </body>
 </html>
-
-
-<!-- created by Tann and Gene, August 2026 -->
