@@ -1,864 +1,875 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ระบบแจ้งสถานะซ่อมหอพัก สำหรับเจ้าหน้าที่</title>
-  <!-- Google Fonts: Sarabun -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบแจ้งสถานะซ่อมหอพัก สำหรับเจ้าหน้าที่</title>
+  
+  <!-- Modern Thai Fonts: Prompt & Sarabun -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <style>
-    :root {
-      --primary: #1e3a8a;
-      --primary-hover: #172554;
-      --primary-light: #eff6ff;
-      --bg: #f8fafc;
-      --card-bg: #ffffff;
-      --text: #0f172a;
-      --text-muted: #64748b;
-      --border: #e2e8f0;
-      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
-      --radius: 12px;
-      --success: #16a34a;
-      --success-hover: #15803d;
-    }
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-hover: #172554;
+      --primary-light: #eff6ff;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+      --radius: 12px;
+      --success: #16a34a;
+      --success-hover: #15803d;
+      --font-stack: 'Prompt', 'Sarabun', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Sukhumvit Set', 'Thonburi', 'Leelawadee UI', sans-serif;
+    }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Sarabun', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-stack);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
 
-    body {
-      background-color: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 32px 16px;
-    }
+    /* Force all form controls to inherit the modern sans-serif font */
+    button, input, select, textarea {
+      font-family: var(--font-stack) !important;
+      -webkit-font-smoothing: antialiased;
+    }
 
-    .container {
-      width: 100%;
-      max-width: 1150px;
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      padding: 32px 28px;
-      box-shadow: var(--shadow);
-      border: 1px solid var(--border);
-    }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 32px 16px;
+    }
 
-    .view-section {
-      display: none;
-    }
-    .view-section.active {
-      display: block;
-    }
+    .container {
+      width: 100%;
+      max-width: 1150px;
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+    }
 
-    /* Page 1: Dorm Selection */
-    .dorm-options {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin: 24px 0;
-    }
+    .view-section {
+      display: none;
+    }
+    .view-section.active {
+      display: block;
+    }
 
-    .dorm-card {
-      display: flex;
-      align-items: center;
-      padding: 16px 20px;
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      background: #fff;
-    }
+    /* Page 1: Dorm Selection */
+    .dorm-options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: 24px 0;
+    }
 
-    .dorm-card:hover {
-      border-color: #93c5fd;
-      background-color: #f0f7ff;
-    }
+    .dorm-card {
+      display: flex;
+      align-items: center;
+      padding: 16px 20px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: #fff;
+    }
 
-    .dorm-card.selected {
-      border-color: var(--primary);
-      background-color: #eff6ff;
-    }
+    .dorm-card:hover {
+      border-color: #93c5fd;
+      background-color: #f0f7ff;
+    }
 
-    .dorm-card input[type="radio"] {
-      display: none;
-    }
+    .dorm-card.selected {
+      border-color: var(--primary);
+      background-color: #eff6ff;
+    }
 
-    .radio-circle {
-      width: 20px;
-      height: 20px;
-      border: 2px solid #cbd5e1;
-      border-radius: 50%;
-      margin-right: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
+    .dorm-card input[type="radio"] {
+      display: none;
+    }
 
-    .dorm-card.selected .radio-circle {
-      border-color: var(--primary);
-    }
+    .radio-circle {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #cbd5e1;
+      border-radius: 50%;
+      margin-right: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
 
-    .dorm-card.selected .radio-circle::after {
-      content: '';
-      width: 10px;
-      height: 10px;
-      background: var(--primary);
-      border-radius: 50%;
-    }
+    .dorm-card.selected .radio-circle {
+      border-color: var(--primary);
+    }
 
-    .btn-primary {
-      width: 100%;
-      padding: 14px;
-      font-size: 1rem;
-      font-weight: 600;
-      color: #fff;
-      background-color: var(--primary);
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-    }
+    .dorm-card.selected .radio-circle::after {
+      content: '';
+      width: 10px;
+      height: 10px;
+      background: var(--primary);
+      border-radius: 50%;
+    }
 
-    .btn-primary:hover {
-      background-color: var(--primary-hover);
-    }
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
+      background-color: var(--primary);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
 
-    .btn-primary:disabled {
-      background-color: #cbd5e1;
-      cursor: not-allowed;
-    }
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+    }
 
-    /* Page 2: Dashboard & Subtabs Header */
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-bottom: 16px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 20px;
-    }
+    .btn-primary:disabled {
+      background-color: #cbd5e1;
+      cursor: not-allowed;
+    }
 
-    .header-chip {
-      display: inline-block;
-      margin-top: 4px;
-      font-size: 0.85rem;
-      color: var(--primary);
-      background: var(--primary-light);
-      padding: 3px 10px;
-      border-radius: 6px;
-      font-weight: 600;
-    }
+    /* Page 2: Dashboard & Subtabs Header */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
 
-    .btn-back {
-      background: #fff;
-      border: 1px solid var(--border);
-      padding: 8px 14px;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      cursor: pointer;
-      color: var(--text-muted);
-      transition: all 0.2s ease;
-    }
+    .header-chip {
+      display: inline-block;
+      margin-top: 4px;
+      font-size: 0.85rem;
+      color: var(--primary);
+      background: var(--primary-light);
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
 
-    .btn-back:hover {
-      background: #f1f5f9;
-      color: var(--text);
-    }
+    .btn-back {
+      background: #fff;
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+    }
 
-    .tabs-nav {
-      display: flex;
-      gap: 8px;
-      border-bottom: 2px solid var(--border);
-      margin-bottom: 20px;
-    }
+    .btn-back:hover {
+      background: #f1f5f9;
+      color: var(--text);
+    }
 
-    .tab-btn {
-      padding: 10px 18px;
-      border: none;
-      background: none;
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      cursor: pointer;
-      border-bottom: 3px solid transparent;
-      margin-bottom: -2px;
-    }
+    .tabs-nav {
+      display: flex;
+      gap: 8px;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 20px;
+    }
 
-    .tab-btn.active {
-      color: var(--primary);
-      border-bottom-color: var(--primary);
-    }
+    .tab-btn {
+      padding: 10px 18px;
+      border: none;
+      background: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+    }
 
-    .subtab-panel {
-      display: none;
-    }
-    .subtab-panel.active {
-      display: block;
-    }
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
 
-    /* Filters Bar */
-    .filter-bar {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-      background: #f8fafc;
-      padding: 12px 14px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-    }
+    .subtab-panel {
+      display: none;
+    }
+    .subtab-panel.active {
+      display: block;
+    }
 
-    .search-input {
-      padding: 7px 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 0.85rem;
-      min-width: 200px;
-      flex: 1;
-      outline: none;
-      background: #fff;
-    }
+    /* Filters Bar */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      background: #f8fafc;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
 
-    .filter-select {
-      padding: 7px 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 0.85rem;
-      outline: none;
-      background: #fff;
-      color: var(--text);
-      cursor: pointer;
-    }
+    .search-input {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      min-width: 200px;
+      flex: 1;
+      outline: none;
+      background: #fff;
+    }
 
-    .btn-sort {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: #fff;
-      border: 1px solid var(--border);
-      padding: 7px 12px;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--text);
-      cursor: pointer;
-      transition: all 0.2s ease;
-      white-space: nowrap;
-    }
+    .filter-select {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      outline: none;
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+    }
 
-    .btn-sort:hover {
-      background: #f1f5f9;
-      border-color: #cbd5e1;
-    }
+    .btn-sort {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #fff;
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
 
-    .table-responsive {
-      overflow-x: auto;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-    }
+    .btn-sort:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.9rem;
-      text-align: left;
-    }
+    .table-responsive {
+      overflow-x: auto;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
 
-    th {
-      background-color: #f1f5f9;
-      color: var(--text-muted);
-      font-weight: 600;
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--border);
-      white-space: nowrap;
-    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      text-align: left;
+    }
 
-    td {
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--border);
-      vertical-align: middle;
-    }
+    th {
+      background-color: #f1f5f9;
+      color: var(--text-muted);
+      font-weight: 600;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
 
-    tbody tr.selected-row {
-      background-color: #f0fdf4;
-    }
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
 
-    /* Status Badges */
-    .status-badge {
-      display: inline-flex;
-      padding: 4px 10px;
-      border-radius: 9999px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      white-space: nowrap;
-      border: 1px solid transparent;
-    }
+    tbody tr.selected-row {
+      background-color: #f0fdf4;
+    }
 
-    .status-received      { background-color: #f1f5f9; color: #475569; border-color: #e2e8f0; }
-    .status-document      { background-color: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
-    .status-in-progress   { background-color: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
-    .status-waiting-parts { background-color: #fef3c7; color: #92400e; border-color: #fde68a; }
-    .status-repair        { background-color: #f3e8ff; color: #6b21a8; border-color: #e9d5ff; }
-    .status-completed     { background-color: #dcfce7; color: #166534; border-color: #bbf7d0; }
-    .status-reject        { background-color: #fee2e2; color: #991b1b; border-color: #fecaca; }
-    .status-unclear       { background-color: #ffedd5; color: #9a3412; border-color: #fed7aa; }
-    .status-default       { background-color: #f8fafc; color: #64748b; border-color: #e2e8f0; }
+    /* Status Badges */
+    .status-badge {
+      display: inline-flex;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      white-space: nowrap;
+      border: 1px solid transparent;
+    }
 
-    /* Bulk Action Bar */
-    .bulk-bar {
-      margin-top: 18px;
-      padding: 16px;
-      background: #f8fafc;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
+    .status-received      { background-color: #f1f5f9; color: #475569; border-color: #e2e8f0; }
+    .status-document      { background-color: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
+    .status-in-progress   { background-color: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
+    .status-waiting-parts { background-color: #fef3c7; color: #92400e; border-color: #fde68a; }
+    .status-repair        { background-color: #f3e8ff; color: #6b21a8; border-color: #e9d5ff; }
+    .status-completed     { background-color: #dcfce7; color: #166534; border-color: #bbf7d0; }
+    .status-reject        { background-color: #fee2e2; color: #991b1b; border-color: #fecaca; }
+    .status-unclear       { background-color: #ffedd5; color: #9a3412; border-color: #fed7aa; }
+    .status-default       { background-color: #f8fafc; color: #64748b; border-color: #e2e8f0; }
 
-    .bulk-action-controls {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+    /* Bulk Action Bar */
+    .bulk-bar {
+      margin-top: 18px;
+      padding: 16px;
+      background: #f8fafc;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
 
-    .select-status {
-      padding: 8px 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 0.9rem;
-      outline: none;
-      background: #fff;
-      transition: opacity 0.2s ease;
-    }
+    .bulk-action-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-    .select-status:disabled {
-      background-color: #f1f5f9;
-      color: #94a3b8;
-      cursor: not-allowed;
-      border-color: #e2e8f0;
-    }
+    .select-status {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      outline: none;
+      background: #fff;
+      transition: opacity 0.2s ease;
+    }
 
-    .btn-bulk-update {
-      padding: 8px 18px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: #fff;
-      background-color: var(--success);
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-    }
+    .select-status:disabled {
+      background-color: #f1f5f9;
+      color: #94a3b8;
+      cursor: not-allowed;
+      border-color: #e2e8f0;
+    }
 
-    .btn-bulk-update:hover {
-      background-color: var(--success-hover);
-    }
+    .btn-bulk-update {
+      padding: 8px 18px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #fff;
+      background-color: var(--success);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
 
-    .btn-bulk-update:disabled {
-      background-color: #cbd5e1;
-      cursor: not-allowed;
-    }
-  </style>
+    .btn-bulk-update:hover {
+      background-color: var(--success-hover);
+    }
+
+    .btn-bulk-update:disabled {
+      background-color: #cbd5e1;
+      cursor: not-allowed;
+    }
+  </style>
 </head>
 <body>
 
-  <div class="container">
-    <!-- PAGE 1: DORM SELECTION -->
-    <div id="page-dorm-select" class="view-section active">
-      <h1 style="font-size: 1.35rem; color: var(--primary); margin-bottom: 6px;">ระบบแจ้งสถานะซ่อมหอพัก สำหรับเจ้าหน้าที่</h1>
-      <p style="font-size: 0.95rem; color: var(--text-muted);">กรุณาเลือกหอพักที่ต้องการดำเนินการ</p>
+  <div class="container">
+    <!-- PAGE 1: DORM SELECTION -->
+    <div id="page-dorm-select" class="view-section active">
+      <h1 style="font-size: 1.35rem; color: var(--primary); margin-bottom: 6px; font-weight: 700;">ระบบแจ้งสถานะซ่อมหอพัก สำหรับเจ้าหน้าที่</h1>
+      <p style="font-size: 0.95rem; color: var(--text-muted);">กรุณาเลือกหอพักที่ต้องการดำเนินการ</p>
 
-      <div class="dorm-options">
-        <label class="dorm-card" onclick="selectDorm(this, 'หอพักนักศึกษาแพทย์ชาย 14 ชั้น')">
-          <input type="radio" name="dorm">
-          <span class="radio-circle"></span>
-          <span>หอพักนักศึกษาแพทย์ชาย 14 ชั้น</span>
-        </label>
-        <label class="dorm-card" onclick="selectDorm(this, 'หอพักนักศึกษาแพทย์ชาย 3 (หอพักนักศึกษาแพทย์หญิง 2)')">
-          <input type="radio" name="dorm">
-          <span class="radio-circle"></span>
-          <span>หอพักนักศึกษาแพทย์ชาย 3 (หอพักนักศึกษาแพทย์หญิง 2)</span>
-        </label>
-        <label class="dorm-card" onclick="selectDorm(this, 'หอพักนักศึกษาแพทย์หญิง 7')">
-          <input type="radio" name="dorm">
-          <span class="radio-circle"></span>
-          <span>หอพักนักศึกษาแพทย์หญิง 7</span>
-        </label>
-        <label class="dorm-card" onclick="selectDorm(this, 'หอพักนักศึกษาแพทย์หญิง 4/37')">
-          <input type="radio" name="dorm">
-          <span class="radio-circle"></span>
-          <span>หอพักนักศึกษาแพทย์หญิง 4/37</span>
-        </label>
-      </div>
+      <div class="dorm-options">
+        <label class="dorm-card" onclick="selectDorm(this, 'หอพักนักศึกษาแพทย์ชาย 14 ชั้น')">
+          <input type="radio" name="dorm">
+          <span class="radio-circle"></span>
+          <span>หอพักนักศึกษาแพทย์ชาย 14 ชั้น</span>
+        </label>
+        <label class="dorm-card" onclick="selectDorm(this, 'หอพักนักศึกษาแพทย์ชาย 3 (หอพักนักศึกษาแพทย์หญิง 2)')">
+          <input type="radio" name="dorm">
+          <span class="radio-circle"></span>
+          <span>หอพักนักศึกษาแพทย์ชาย 3 (หอพักนักศึกษาแพทย์หญิง 2)</span>
+        </label>
+        <label class="dorm-card" onclick="selectDorm(this, 'หอพักนักศึกษาแพทย์หญิง 7')">
+          <input type="radio" name="dorm">
+          <span class="radio-circle"></span>
+          <span>หอพักนักศึกษาแพทย์หญิง 7</span>
+        </label>
+        <label class="dorm-card" onclick="selectDorm(this, 'หอพักนักศึกษาแพทย์หญิง 4/37')">
+          <input type="radio" name="dorm">
+          <span class="radio-circle"></span>
+          <span>หอพักนักศึกษาแพทย์หญิง 4/37</span>
+        </label>
+      </div>
 
-      <button class="btn-primary" id="btnContinue" disabled onclick="navigateToDashboard()">ถัดไป</button>
-    </div>
+      <button class="btn-primary" id="btnContinue" disabled onclick="navigateToDashboard()">ถัดไป</button>
+    </div>
 
-    <!-- PAGE 2: DASHBOARD & BULK UPDATE -->
-    <div id="page-dashboard" class="view-section">
-      <div class="page-header">
-        <div>
-          <h2 style="font-size: 1.2rem; color: var(--primary);">ระบบแจ้งสถานะซ่อมหอพัก สำหรับเจ้าหน้าที่</h2>
-          <div class="header-chip" id="selectedDormBadge">หอพัก</div>
-        </div>
-        <button class="btn-back" onclick="navigateToSelection()">← เปลี่ยนหอพัก</button>
-      </div>
+    <!-- PAGE 2: DASHBOARD & BULK UPDATE -->
+    <div id="page-dashboard" class="view-section">
+      <div class="page-header">
+        <div>
+          <h2 style="font-size: 1.2rem; color: var(--primary); font-weight: 700;">ระบบแจ้งสถานะซ่อมหอพัก สำหรับเจ้าหน้าที่</h2>
+          <div class="header-chip" id="selectedDormBadge">หอพัก</div>
+        </div>
+        <button class="btn-back" onclick="navigateToSelection()">← เปลี่ยนหอพัก</button>
+      </div>
 
-      <!-- Navigation Tabs -->
-      <div class="tabs-nav">
-        <button class="tab-btn active" id="tabBtn1" onclick="switchTab('tab-active-rooms')">Dashboard ห้องพักทั้งหมด (Active Status)</button>
-        <button class="tab-btn" id="tabBtn2" onclick="switchTab('tab-update-status')">อัปเดตสถานะการซ่อม (Bulk Update)</button>
-      </div>
+      <!-- Navigation Tabs -->
+      <div class="tabs-nav">
+        <button class="tab-btn active" id="tabBtn1" onclick="switchTab('tab-active-rooms')">Dashboard ห้องพักทั้งหมด (Active Status)</button>
+        <button class="tab-btn" id="tabBtn2" onclick="switchTab('tab-update-status')">อัปเดตสถานะการซ่อม (Bulk Update)</button>
+      </div>
 
-      <!-- Subtab 1: Active Status Dashboard -->
-      <div id="tab-active-rooms" class="subtab-panel active">
-        <div class="filter-bar">
-          <input type="text" id="searchInput1" class="search-input" placeholder="ค้นหาเลขห้อง หรือปัญหา..." onkeyup="applyDashboardFilters()">
-          
-          <select id="categoryFilter1" class="filter-select" onchange="applyDashboardFilters()">
-            <option value="">หมวดหมู่ปัญหาทั้งหมด</option>
-            <option value="หลอดไฟ">หลอดไฟ</option>
-            <option value="เครื่องทำน้ำอุ่น">เครื่องทำน้ำอุ่น</option>
-            <option value="เครื่องปรับอากาศ">เครื่องปรับอากาศและคอมเพรสเซอร์</option>
-            <option value="ระบบประปา">ระบบประปา / ท่อน้ำ / สายชำระ</option>
-            <option value="มู่ลี่">มู่ลี่</option>
-            <option value="ผนังและโครงสร้าง">ผนังและโครงสร้าง</option>
-            <option value="เฟอร์นิเจอร์">เฟอร์นิเจอร์และกระจก</option>
-            <option value="อื่น">อื่น ๆ</option>
-          </select>
+      <!-- Subtab 1: Active Status Dashboard -->
+      <div id="tab-active-rooms" class="subtab-panel active">
+        <div class="filter-bar">
+          <input type="text" id="searchInput1" class="search-input" placeholder="ค้นหาเลขห้อง หรือปัญหา..." onkeyup="applyDashboardFilters()">
+          
+          <select id="categoryFilter1" class="filter-select" onchange="applyDashboardFilters()">
+            <option value="">หมวดหมู่ปัญหาทั้งหมด</option>
+            <option value="หลอดไฟ">หลอดไฟ</option>
+            <option value="เครื่องทำน้ำอุ่น">เครื่องทำน้ำอุ่น</option>
+            <option value="เครื่องปรับอากาศ">เครื่องปรับอากาศและคอมเพรสเซอร์</option>
+            <option value="ระบบประปา">ระบบประปา / ท่อน้ำ / สายชำระ</option>
+            <option value="มู่ลี่">มู่ลี่</option>
+            <option value="ผนังและโครงสร้าง">ผนังและโครงสร้าง</option>
+            <option value="เฟอร์นิเจอร์">เฟอร์นิเจอร์และกระจก</option>
+            <option value="อื่น">อื่น ๆ</option>
+          </select>
 
-          <select id="statusFilter1" class="filter-select" onchange="applyDashboardFilters()">
-            <option value="">สถานะทั้งหมด</option>
-            <option value="ได้รับคำร้องแล้ว">ได้รับคำร้องแล้ว</option>
-            <option value="แจ้งซ่อมในระบบแล้ว">แจ้งซ่อมในระบบแล้ว</option>
-            <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
-            <option value="รอเบิกอะไหล่">รอเบิกอะไหล่</option>
-            <option value="ช่างจะเข้าซ่อมในห้อง">ช่างจะเข้าซ่อมในห้อง</option>
-            <option value="สำเร็จ">สำเร็จ</option>
-            <option value="ไม่รับคำร้อง">ไม่รับคำร้อง</option>
-            <option value="คำร้องไม่ชัดเจน">คำร้องไม่ชัดเจน</option>
-          </select>
+          <select id="statusFilter1" class="filter-select" onchange="applyDashboardFilters()">
+            <option value="">สถานะทั้งหมด</option>
+            <option value="ได้รับคำร้องแล้ว">ได้รับคำร้องแล้ว</option>
+            <option value="แจ้งซ่อมในระบบแล้ว">แจ้งซ่อมในระบบแล้ว</option>
+            <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
+            <option value="รอเบิกอะไหล่">รอเบิกอะไหล่</option>
+            <option value="ช่างจะเข้าซ่อมในห้อง">ช่างจะเข้าซ่อมในห้อง</option>
+            <option value="สำเร็จ">สำเร็จ</option>
+            <option value="ไม่รับคำร้อง">ไม่รับคำร้อง</option>
+            <option value="คำร้องไม่ชัดเจน">คำร้องไม่ชัดเจน</option>
+          </select>
 
-          <button class="btn-sort" id="sortBtn1" onclick="toggleDashboardSort()">
-            <span id="sortIcon1">🔢</span> เรียงเลขห้อง: <span id="sortText1">น้อย ➔ มาก</span>
-          </button>
+          <button class="btn-sort" id="sortBtn1" onclick="toggleDashboardSort()">
+            <span id="sortIcon1">🔢</span> เรียงเลขห้อง: <span id="sortText1">น้อย ➔ มาก</span>
+          </button>
 
-          <span id="recordCount1" style="font-size: 0.85rem; color: var(--text-muted); margin-left: auto;">กำลังโหลด...</span>
-        </div>
+          <span id="recordCount1" style="font-size: 0.85rem; color: var(--text-muted); margin-left: auto;">กำลังโหลด...</span>
+        </div>
 
-        <div class="table-responsive">
-          <table>
-            <thead>
-              <tr>
-                <th>ห้อง</th>
-                <th>หมวดหมู่ / ปัญหา</th>
-                <th>รายละเอียด</th>
-                <th>วันที่แจ้ง</th>
-                <th>สถานะล่าสุด</th>
-              </tr>
-            </thead>
-            <tbody id="tableBody1">
-              <tr><td colspan="5" style="text-align:center; padding: 24px; color: var(--text-muted);">กำลังโหลดข้อมูล...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>ห้อง</th>
+                <th>หมวดหมู่ / ปัญหา</th>
+                <th>รายละเอียด</th>
+                <th>วันที่แจ้ง</th>
+                <th>สถานะล่าสุด</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody1">
+              <tr><td colspan="5" style="text-align:center; padding: 24px; color: var(--text-muted);">กำลังโหลดข้อมูล...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-      <!-- Subtab 2: Bulk Update Status Selection -->
-      <div id="tab-update-status" class="subtab-panel">
-        <div class="filter-bar">
-          <input type="text" id="roomFilterInput" class="search-input" placeholder="พิมพ์เลขห้อง หรือปัญหาเพื่อค้นหา..." onkeyup="applyUpdateFilters()">
-          
-          <select id="categoryFilter2" class="filter-select" onchange="applyUpdateFilters()">
-            <option value="">หมวดหมู่ปัญหาทั้งหมด</option>
-            <option value="หลอดไฟ">หลอดไฟ</option>
-            <option value="เครื่องทำน้ำอุ่น">เครื่องทำน้ำอุ่น</option>
-            <option value="เครื่องปรับอากาศ">เครื่องปรับอากาศและคอมเพรสเซอร์</option>
-            <option value="ระบบประปา">ระบบประปา / ท่อน้ำ / สายชำระ</option>
-            <option value="มู่ลี่">มู่ลี่</option>
-            <option value="ผนังและโครงสร้าง">ผนังและโครงสร้าง</option>
-            <option value="เฟอร์นิเจอร์">เฟอร์นิเจอร์และกระจก</option>
-            <option value="อื่น">อื่น ๆ</option>
-          </select>
+      <!-- Subtab 2: Bulk Update Status Selection -->
+      <div id="tab-update-status" class="subtab-panel">
+        <div class="filter-bar">
+          <input type="text" id="roomFilterInput" class="search-input" placeholder="พิมพ์เลขห้อง หรือปัญหาเพื่อค้นหา..." onkeyup="applyUpdateFilters()">
+          
+          <select id="categoryFilter2" class="filter-select" onchange="applyUpdateFilters()">
+            <option value="">หมวดหมู่ปัญหาทั้งหมด</option>
+            <option value="หลอดไฟ">หลอดไฟ</option>
+            <option value="เครื่องทำน้ำอุ่น">เครื่องทำน้ำอุ่น</option>
+            <option value="เครื่องปรับอากาศ">เครื่องปรับอากาศและคอมเพรสเซอร์</option>
+            <option value="ระบบประปา">ระบบประปา / ท่อน้ำ / สายชำระ</option>
+            <option value="มู่ลี่">มู่ลี่</option>
+            <option value="ผนังและโครงสร้าง">ผนังและโครงสร้าง</option>
+            <option value="เฟอร์นิเจอร์">เฟอร์นิเจอร์และกระจก</option>
+            <option value="อื่น">อื่น ๆ</option>
+          </select>
 
-          <select id="statusFilter2" class="filter-select" onchange="applyUpdateFilters()">
-            <option value="">สถานะปัจจุบันทั้งหมด</option>
-            <option value="ได้รับคำร้องแล้ว">ได้รับคำร้องแล้ว</option>
-            <option value="แจ้งซ่อมในระบบแล้ว">แจ้งซ่อมในระบบแล้ว</option>
-            <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
-            <option value="รอเบิกอะไหล่">รอเบิกอะไหล่</option>
-            <option value="ช่างจะเข้าซ่อมในห้อง">ช่างจะเข้าซ่อมในห้อง</option>
-            <option value="สำเร็จ">สำเร็จ</option>
-            <option value="ไม่รับคำร้อง">ไม่รับคำร้อง</option>
-            <option value="คำร้องไม่ชัดเจน">คำร้องไม่ชัดเจน</option>
-          </select>
+          <select id="statusFilter2" class="filter-select" onchange="applyUpdateFilters()">
+            <option value="">สถานะปัจจุบันทั้งหมด</option>
+            <option value="ได้รับคำร้องแล้ว">ได้รับคำร้องแล้ว</option>
+            <option value="แจ้งซ่อมในระบบแล้ว">แจ้งซ่อมในระบบแล้ว</option>
+            <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
+            <option value="รอเบิกอะไหล่">รอเบิกอะไหล่</option>
+            <option value="ช่างจะเข้าซ่อมในห้อง">ช่างจะเข้าซ่อมในห้อง</option>
+            <option value="สำเร็จ">สำเร็จ</option>
+            <option value="ไม่รับคำร้อง">ไม่รับคำร้อง</option>
+            <option value="คำร้องไม่ชัดเจน">คำร้องไม่ชัดเจน</option>
+          </select>
 
-          <button class="btn-sort" id="sortBtn2" onclick="toggleUpdateSort()">
-            <span id="sortIcon2">🔢</span> เรียงเลขห้อง: <span id="sortText2">น้อย ➔ มาก</span>
-          </button>
+          <button class="btn-sort" id="sortBtn2" onclick="toggleUpdateSort()">
+            <span id="sortIcon2">🔢</span> เรียงเลขห้อง: <span id="sortText2">น้อย ➔ มาก</span>
+          </button>
 
-          <span id="selectionSummary" style="font-size: 0.85rem; font-weight: 600; color: var(--primary); margin-left: auto;">เลือกแล้ว 0 รายการ</span>
-        </div>
+          <span id="selectionSummary" style="font-size: 0.85rem; font-weight: 600; color: var(--primary); margin-left: auto;">เลือกแล้ว 0 รายการ</span>
+        </div>
 
-        <div class="table-responsive">
-          <table>
-            <thead>
-              <tr>
-                <th style="width: 44px; text-align: center;">
-                  <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)">
-                </th>
-                <th>ห้อง</th>
-                <th>หมวดหมู่ / ปัญหา</th>
-                <th>รายละเอียด</th>
-                <th>สถานะปัจจุบัน</th>
-                <th style="min-width: 170px;">เลือกสถานะใหม่ (แต่ละแถว)</th>
-              </tr>
-            </thead>
-            <tbody id="updateTableBody">
-              <tr><td colspan="6" style="text-align:center; padding: 24px; color: var(--text-muted);">กำลังโหลดรายการ...</td></tr>
-            </tbody>
-          </table>
-        </div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 44px; text-align: center;">
+                  <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)">
+                </th>
+                <th>ห้อง</th>
+                <th>หมวดหมู่ / ปัญหา</th>
+                <th>รายละเอียด</th>
+                <th>สถานะปัจจุบัน</th>
+                <th style="min-width: 170px;">เลือกสถานะใหม่ (แต่ละแถว)</th>
+              </tr>
+            </thead>
+            <tbody id="updateTableBody">
+              <tr><td colspan="6" style="text-align:center; padding: 24px; color: var(--text-muted);">กำลังโหลดรายการ...</td></tr>
+            </tbody>
+          </table>
+        </div>
 
-        <!-- Bulk Action Controls -->
-        <div class="bulk-bar">
-          <div class="bulk-action-controls">
-            <span style="font-size: 0.9rem; font-weight: 600;">เปลี่ยนสถานะทุกแถวที่เลือกพร้อมกัน:</span>
-            <select id="bulkStatusSelect" class="select-status" onchange="applyStatusToSelected(this.value)">
-              <option value="">-- เลือกสถานะส่วนกลาง --</option>
-              <option value="แจ้งซ่อมในระบบแล้ว">แจ้งซ่อมในระบบแล้ว</option>
-              <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
-              <option value="รอเบิกอะไหล่">รอเบิกอะไหล่</option>
-              <option value="ช่างจะเข้าซ่อมในห้อง">ช่างจะเข้าซ่อมในห้อง</option>
-              <option value="สำเร็จ">สำเร็จ</option>
-              <option value="ไม่รับคำร้อง">ไม่รับคำร้อง</option>
-              <option value="คำร้องไม่ชัดเจน">คำร้องไม่ชัดเจน</option>
-            </select>
-          </div>
+        <!-- Bulk Action Controls -->
+        <div class="bulk-bar">
+          <div class="bulk-action-controls">
+            <span style="font-size: 0.9rem; font-weight: 600;">เปลี่ยนสถานะทุกแถวที่เลือกพร้อมกัน:</span>
+            <select id="bulkStatusSelect" class="select-status" onchange="applyStatusToSelected(this.value)">
+              <option value="">-- เลือกสถานะส่วนกลาง --</option>
+              <option value="แจ้งซ่อมในระบบแล้ว">แจ้งซ่อมในระบบแล้ว</option>
+              <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
+              <option value="รอเบิกอะไหล่">รอเบิกอะไหล่</option>
+              <option value="ช่างจะเข้าซ่อมในห้อง">ช่างจะเข้าซ่อมในห้อง</option>
+              <option value="สำเร็จ">สำเร็จ</option>
+              <option value="ไม่รับคำร้อง">ไม่รับคำร้อง</option>
+              <option value="คำร้องไม่ชัดเจน">คำร้องไม่ชัดเจน</option>
+            </select>
+          </div>
 
-          <button id="btnSubmitBulk" class="btn-bulk-update" disabled onclick="submitBulkStatusUpdates()">
-            บันทึกการอัปเดตสถานะ
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+          <button id="btnSubmitBulk" class="btn-bulk-update" disabled onclick="submitBulkStatusUpdates()">
+            บันทึกการอัปเดตสถานะ
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-  <script>
-    let currentDorm = "";
-    let activeRoomsData = [];
+  <script>
+    let currentDorm = "";
+    let activeRoomsData = [];
 
-    let sortOrderTab1 = 'asc';
-    let sortOrderTab2 = 'asc';
+    let sortOrderTab1 = 'asc';
+    let sortOrderTab2 = 'asc';
 
-    const API_ENDPOINT = "https://script.google.com/macros/s/AKfycbwYbn6eHYTpd82hXmGfuNRspZk23fQgfAlkOJrnI-KKCcar69Z2RasXm-zCY22i-wSVmQ/exec";
+    const API_ENDPOINT = "https://script.google.com/macros/s/AKfycbwYbn6eHYTpd82hXmGfuNRspZk23fQgfAlkOJrnI-KKCcar69Z2RasXm-zCY22i-wSVmQ/exec";
 
-    function getBadgeClass(status) {
-      if (!status) return 'status-default';
-      const s = status.trim();
-      if (s.includes('ได้รับคำร้องแล้ว')) return 'status-received';
-      if (s.includes('แจ้งซ่อมในระบบแล้ว')) return 'status-document';
-      if (s.includes('กำลังดำเนินการ')) return 'status-in-progress';
-      if (s.includes('รอเบิกอะไหล่')) return 'status-waiting-parts';
-      if (s.includes('ช่างจะเข้าซ่อมในห้อง')) return 'status-repair';
-      if (s.includes('สำเร็จ')) return 'status-completed';
-      if (s.includes('ไม่รับคำร้อง')) return 'status-reject';
-      if (s.includes('คำร้องไม่ชัดเจน')) return 'status-unclear';
-      return 'status-default';
-    }
+    function getBadgeClass(status) {
+      if (!status) return 'status-default';
+      const s = status.trim();
+      if (s.includes('ได้รับคำร้องแล้ว')) return 'status-received';
+      if (s.includes('แจ้งซ่อมในระบบแล้ว')) return 'status-document';
+      if (s.includes('กำลังดำเนินการ')) return 'status-in-progress';
+      if (s.includes('รอเบิกอะไหล่')) return 'status-waiting-parts';
+      if (s.includes('ช่างจะเข้าซ่อมในห้อง')) return 'status-repair';
+      if (s.includes('สำเร็จ')) return 'status-completed';
+      if (s.includes('ไม่รับคำร้อง')) return 'status-reject';
+      if (s.includes('คำร้องไม่ชัดเจน')) return 'status-unclear';
+      return 'status-default';
+    }
 
-    function selectDorm(cardElement, dormName) {
-      document.querySelectorAll('.dorm-card').forEach(c => c.classList.remove('selected'));
-      cardElement.classList.add('selected');
-      cardElement.querySelector('input').checked = true;
-      currentDorm = dormName;
-      document.getElementById('btnContinue').disabled = false;
-    }
+    function selectDorm(cardElement, dormName) {
+      document.querySelectorAll('.dorm-card').forEach(c => c.classList.remove('selected'));
+      cardElement.classList.add('selected');
+      cardElement.querySelector('input').checked = true;
+      currentDorm = dormName;
+      document.getElementById('btnContinue').disabled = false;
+    }
 
-    function navigateToDashboard() {
-      if (!currentDorm) return;
-      document.getElementById('page-dorm-select').classList.remove('active');
-      document.getElementById('page-dashboard').classList.add('active');
-      document.getElementById('selectedDormBadge').textContent = currentDorm;
-      loadActiveStatusData();
-    }
+    function navigateToDashboard() {
+      if (!currentDorm) return;
+      document.getElementById('page-dorm-select').classList.remove('active');
+      document.getElementById('page-dashboard').classList.add('active');
+      document.getElementById('selectedDormBadge').textContent = currentDorm;
+      loadActiveStatusData();
+    }
 
-    function navigateToSelection() {
-      document.getElementById('page-dashboard').classList.remove('active');
-      document.getElementById('page-dorm-select').classList.add('active');
-    }
+    function navigateToSelection() {
+      document.getElementById('page-dashboard').classList.remove('active');
+      document.getElementById('page-dorm-select').classList.add('active');
+    }
 
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.subtab-panel').forEach(panel => panel.classList.remove('active'));
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.subtab-panel').forEach(panel => panel.classList.remove('active'));
 
-      if (tabId === 'tab-active-rooms') {
-        document.getElementById('tabBtn1').classList.add('active');
-        document.getElementById('tab-active-rooms').classList.add('active');
-      } else {
-        document.getElementById('tabBtn2').classList.add('active');
-        document.getElementById('tab-update-status').classList.add('active');
-      }
-    }
+      if (tabId === 'tab-active-rooms') {
+        document.getElementById('tabBtn1').classList.add('active');
+        document.getElementById('tab-active-rooms').classList.add('active');
+      } else {
+        document.getElementById('tabBtn2').classList.add('active');
+        document.getElementById('tab-update-status').classList.add('active');
+      }
+    }
 
-    async function loadActiveStatusData() {
-      try {
-        if (API_ENDPOINT.includes('YOUR_DEPLOYMENT_ID')) {
-          activeRoomsData = [];
-        } else {
-          const res = await fetch(`${API_ENDPOINT}?dorm=${encodeURIComponent(currentDorm)}`);
-          const fetched = await res.json();
-          activeRoomsData = (fetched || []).map(item => ({ ...item, isChecked: false, newStatus: '' }));
-        }
+    async function loadActiveStatusData() {
+      try {
+        if (API_ENDPOINT.includes('YOUR_DEPLOYMENT_ID')) {
+          activeRoomsData = [];
+        } else {
+          const res = await fetch(`${API_ENDPOINT}?dorm=${encodeURIComponent(currentDorm)}`);
+          const fetched = await res.json();
+          activeRoomsData = (fetched || []).map(item => ({ ...item, isChecked: false, newStatus: '' }));
+        }
 
-        applyDashboardFilters();
-        applyUpdateFilters();
-      } catch (err) {
-        document.getElementById('tableBody1').innerHTML = `<tr><td colspan="5" style="color:red; text-align:center;">โหลดข้อมูลไม่สำเร็จ: ${err.message}</td></tr>`;
-      }
-    }
+        applyDashboardFilters();
+        applyUpdateFilters();
+      } catch (err) {
+        document.getElementById('tableBody1').innerHTML = `<tr><td colspan="5" style="color:red; text-align:center;">โหลดข้อมูลไม่สำเร็จ: ${err.message}</td></tr>`;
+      }
+    }
 
-    function compareRoomNumbers(a, b, order = 'asc') {
-      const roomA = String(a.roomNumber || '');
-      const roomB = String(b.roomNumber || '');
-      const res = roomA.localeCompare(roomB, undefined, { numeric: true, sensitivity: 'base' });
-      return order === 'asc' ? res : -res;
-    }
+    function compareRoomNumbers(a, b, order = 'asc') {
+      const roomA = String(a.roomNumber || '');
+      const roomB = String(b.roomNumber || '');
+      return order === 'asc' 
+        ? roomA.localeCompare(roomB, undefined, { numeric: true, sensitivity: 'base' })
+        : roomB.localeCompare(roomA, undefined, { numeric: true, sensitivity: 'base' });
+    }
 
-    function toggleDashboardSort() {
-      sortOrderTab1 = sortOrderTab1 === 'asc' ? 'desc' : 'asc';
-      document.getElementById('sortText1').textContent = sortOrderTab1 === 'asc' ? 'น้อย ➔ มาก' : 'มาก ➔ น้อย';
-      applyDashboardFilters();
-    }
+    function toggleDashboardSort() {
+      sortOrderTab1 = sortOrderTab1 === 'asc' ? 'desc' : 'asc';
+      document.getElementById('sortText1').textContent = sortOrderTab1 === 'asc' ? 'น้อย ➔ มาก' : 'มาก ➔ น้อย';
+      applyDashboardFilters();
+    }
 
-    function applyDashboardFilters() {
-      const search = (document.getElementById('searchInput1').value || '').toLowerCase().trim();
-      const cat = (document.getElementById('categoryFilter1').value || '').toLowerCase().trim();
-      const stat = (document.getElementById('statusFilter1').value || '').toLowerCase().trim();
+    function applyDashboardFilters() {
+      const search = (document.getElementById('searchInput1').value || '').toLowerCase().trim();
+      const cat = (document.getElementById('categoryFilter1').value || '').toLowerCase().trim();
+      const stat = (document.getElementById('statusFilter1').value || '').toLowerCase().trim();
 
-      let filtered = activeRoomsData.filter(item => {
-        const textMatch = !search || 
-          (item.roomNumber || '').toLowerCase().includes(search) || 
-          (item.category || '').toLowerCase().includes(search) || 
-          (item.detail || '').toLowerCase().includes(search);
-        
-        const catMatch = !cat || (item.category || '').toLowerCase().includes(cat);
-        const statMatch = !stat || (item.activeStatus || '').toLowerCase().includes(stat);
+      let filtered = activeRoomsData.filter(item => {
+        const textMatch = !search || 
+          (item.roomNumber || '').toLowerCase().includes(search) || 
+          (item.category || '').toLowerCase().includes(search) || 
+          (item.detail || '').toLowerCase().includes(search);
+        
+        const catMatch = !cat || (item.category || '').toLowerCase().includes(cat);
+        const statMatch = !stat || (item.activeStatus || '').toLowerCase().includes(stat);
 
-        return textMatch && catMatch && statMatch;
-      });
+        return textMatch && catMatch && statMatch;
+      });
 
-      filtered.sort((a, b) => compareRoomNumbers(a, b, sortOrderTab1));
-      renderDashboardTable(filtered);
-    }
+      filtered.sort((a, b) => compareRoomNumbers(a, b, sortOrderTab1));
+      renderDashboardTable(filtered);
+    }
 
-    function renderDashboardTable(dataList) {
-      const tbody = document.getElementById('tableBody1');
-      const count = document.getElementById('recordCount1');
+    function renderDashboardTable(dataList) {
+      const tbody = document.getElementById('tableBody1');
+      const count = document.getElementById('recordCount1');
 
-      if (!dataList || dataList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:24px;">ไม่พบรายการที่ตรงกับเงื่อนไข</td></tr>';
-        count.textContent = 'พบ 0 รายการ';
-        return;
-      }
+      if (!dataList || dataList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:24px;">ไม่พบรายการที่ตรงกับเงื่อนไข</td></tr>';
+        count.textContent = 'พบ 0 รายการ';
+        return;
+      }
 
-      count.textContent = `พบ ${dataList.length} รายการ`;
-      tbody.innerHTML = dataList.map(item => `
-        <tr>
-          <td><strong>${item.roomNumber || '-'}</strong></td>
-          <td>${item.category || '-'}</td>
-          <td>${item.detail || '-'}</td>
-          <td>${item.timestamp || '-'}</td>
-          <td>
-            <span class="status-badge ${getBadgeClass(item.activeStatus)}">
-              ${item.activeStatus || 'ไม่มีสถานะ'}
-            </span>
-          </td>
-        </tr>
-      `).join('');
-    }
+      count.textContent = `พบ ${dataList.length} รายการ`;
+      tbody.innerHTML = dataList.map(item => `
+        <tr>
+          <td><strong>${item.roomNumber || '-'}</strong></td>
+          <td>${item.category || '-'}</td>
+          <td>${item.detail || '-'}</td>
+          <td>${item.timestamp || '-'}</td>
+          <td>
+            <span class="status-badge ${getBadgeClass(item.activeStatus)}">
+              ${item.activeStatus || 'ไม่มีสถานะ'}
+            </span>
+          </td>
+        </tr>
+      `).join('');
+    }
 
-    function toggleUpdateSort() {
-      sortOrderTab2 = sortOrderTab2 === 'asc' ? 'desc' : 'asc';
-      document.getElementById('sortText2').textContent = sortOrderTab2 === 'asc' ? 'น้อย ➔ มาก' : 'มาก ➔ น้อย';
-      applyUpdateFilters();
-    }
+    function toggleUpdateSort() {
+      sortOrderTab2 = sortOrderTab2 === 'asc' ? 'desc' : 'asc';
+      document.getElementById('sortText2').textContent = sortOrderTab2 === 'asc' ? 'น้อย ➔ มาก' : 'มาก ➔ น้อย';
+      applyUpdateFilters();
+    }
 
-    function applyUpdateFilters() {
-      const search = (document.getElementById('roomFilterInput').value || '').toLowerCase().trim();
-      const cat = (document.getElementById('categoryFilter2').value || '').toLowerCase().trim();
-      const stat = (document.getElementById('statusFilter2').value || '').toLowerCase().trim();
+    function applyUpdateFilters() {
+      const search = (document.getElementById('roomFilterInput').value || '').toLowerCase().trim();
+      const cat = (document.getElementById('categoryFilter2').value || '').toLowerCase().trim();
+      const stat = (document.getElementById('statusFilter2').value || '').toLowerCase().trim();
 
-      let filtered = activeRoomsData.filter(item => {
-        const textMatch = !search || 
-          (item.roomNumber || '').toLowerCase().includes(search) || 
-          (item.category || '').toLowerCase().includes(search) || 
-          (item.detail || '').toLowerCase().includes(search);
-        
-        const catMatch = !cat || (item.category || '').toLowerCase().includes(cat);
-        const statMatch = !stat || (item.activeStatus || '').toLowerCase().includes(stat);
+      let filtered = activeRoomsData.filter(item => {
+        const textMatch = !search || 
+          (item.roomNumber || '').toLowerCase().includes(search) || 
+          (item.category || '').toLowerCase().includes(search) || 
+          (item.detail || '').toLowerCase().includes(search);
+        
+        const catMatch = !cat || (item.category || '').toLowerCase().includes(cat);
+        const statMatch = !stat || (item.activeStatus || '').toLowerCase().includes(stat);
 
-        return textMatch && catMatch && statMatch;
-      });
+        return textMatch && catMatch && statMatch;
+      });
 
-      filtered.sort((a, b) => {
-        if (a.isChecked === b.isChecked) {
-          return compareRoomNumbers(a, b, sortOrderTab2);
-        }
-        return a.isChecked ? -1 : 1;
-      });
+      filtered.sort((a, b) => {
+        if (a.isChecked === b.isChecked) {
+          return compareRoomNumbers(a, b, sortOrderTab2);
+        }
+        return a.isChecked ? -1 : 1;
+      });
 
-      renderUpdateTable(filtered);
-    }
+      renderUpdateTable(filtered);
+    }
 
-    function renderUpdateTable(dataList) {
-      const tbody = document.getElementById('updateTableBody');
+    function renderUpdateTable(dataList) {
+      const tbody = document.getElementById('updateTableBody');
 
-      if (!dataList || dataList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:24px;">ไม่พบรายการที่ตรงกับเงื่อนไข</td></tr>';
-        return;
-      }
+      if (!dataList || dataList.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:24px;">ไม่พบรายการที่ตรงกับเงื่อนไข</td></tr>';
+        return;
+      }
 
-      tbody.innerHTML = dataList.map(item => `
-        <tr id="row-${item.id}" class="${item.isChecked ? 'selected-row' : ''}">
-          <td style="text-align: center;">
-            <input type="checkbox" class="row-checkbox" data-id="${item.id}" ${item.isChecked ? 'checked' : ''} onchange="handleRowCheckboxChange(this)">
-          </td>
-          <td><strong>${item.roomNumber || '-'}</strong></td>
-          <td>${item.category || '-'}</td>
-          <td>${item.detail || '-'}</td>
-          <td>
-            <span class="status-badge ${getBadgeClass(item.activeStatus)}">${item.activeStatus || '-'}</span>
-          </td>
-          <td>
-            <select class="select-status row-status-select" data-id="${item.id}" ${!item.isChecked ? 'disabled' : ''} onchange="handleRowStatusChange('${item.id}', this.value)">
-              <option value="">-- เลือกสถานะใหม่ --</option>
-              <option value="แจ้งซ่อมในระบบแล้ว" ${item.newStatus === 'แจ้งซ่อมในระบบแล้ว' ? 'selected' : ''}>แจ้งซ่อมในระบบแล้ว</option>
-              <option value="กำลังดำเนินการ" ${item.newStatus === 'กำลังดำเนินการ' ? 'selected' : ''}>กำลังดำเนินการ</option>
-              <option value="รอเบิกอะไหล่" ${item.newStatus === 'รอเบิกอะไหล่' ? 'selected' : ''}>รอเบิกอะไหล่</option>
-              <option value="ช่างจะเข้าซ่อมในห้อง" ${item.newStatus === 'ช่างจะเข้าซ่อมในห้อง' ? 'selected' : ''}>ช่างจะเข้าซ่อมในห้อง</option>
-              <option value="สำเร็จ" ${item.newStatus === 'สำเร็จ' ? 'selected' : ''}>สำเร็จ</option>
-              <option value="ไม่รับคำร้อง" ${item.newStatus === 'ไม่รับคำร้อง' ? 'selected' : ''}>ไม่รับคำร้อง</option>
-              <option value="คำร้องไม่ชัดเจน" ${item.newStatus === 'คำร้องไม่ชัดเจน' ? 'selected' : ''}>คำร้องไม่ชัดเจน</option>
-            </select>
-          </td>
-        </tr>
-      `).join('');
+      tbody.innerHTML = dataList.map(item => `
+        <tr id="row-${item.id}" class="${item.isChecked ? 'selected-row' : ''}">
+          <td style="text-align: center;">
+            <input type="checkbox" class="row-checkbox" data-id="${item.id}" ${item.isChecked ? 'checked' : ''} onchange="handleRowCheckboxChange(this)">
+          </td>
+          <td><strong>${item.roomNumber || '-'}</strong></td>
+          <td>${item.category || '-'}</td>
+          <td>${item.detail || '-'}</td>
+          <td>
+            <span class="status-badge ${getBadgeClass(item.activeStatus)}">${item.activeStatus || '-'}</span>
+          </td>
+          <td>
+            <select class="select-status row-status-select" data-id="${item.id}" ${!item.isChecked ? 'disabled' : ''} onchange="handleRowStatusChange('${item.id}', this.value)">
+              <option value="">-- เลือกสถานะใหม่ --</option>
+              <option value="แจ้งซ่อมในระบบแล้ว" ${item.newStatus === 'แจ้งซ่อมในระบบแล้ว' ? 'selected' : ''}>แจ้งซ่อมในระบบแล้ว</option>
+              <option value="กำลังดำเนินการ" ${item.newStatus === 'กำลังดำเนินการ' ? 'selected' : ''}>กำลังดำเนินการ</option>
+              <option value="รอเบิกอะไหล่" ${item.newStatus === 'รอเบิกอะไหล่' ? 'selected' : ''}>รอเบิกอะไหล่</option>
+              <option value="ช่างจะเข้าซ่อมในห้อง" ${item.newStatus === 'ช่างจะเข้าซ่อมในห้อง' ? 'selected' : ''}>ช่างจะเข้าซ่อมในห้อง</option>
+              <option value="สำเร็จ" ${item.newStatus === 'สำเร็จ' ? 'selected' : ''}>สำเร็จ</option>
+              <option value="ไม่รับคำร้อง" ${item.newStatus === 'ไม่รับคำร้อง' ? 'selected' : ''}>ไม่รับคำร้อง</option>
+              <option value="คำร้องไม่ชัดเจน" ${item.newStatus === 'คำร้องไม่ชัดเจน' ? 'selected' : ''}>คำร้องไม่ชัดเจน</option>
+            </select>
+          </td>
+        </tr>
+      `).join('');
 
-      updateSelectionUI();
-    }
+      updateSelectionUI();
+    }
 
-    function handleRowCheckboxChange(cb) {
-      const id = String(cb.dataset.id);
-      const target = activeRoomsData.find(i => String(i.id) === id);
-      
-      if (target) {
-        target.isChecked = cb.checked;
-        if (!cb.checked) {
-          target.newStatus = '';
-        }
-      }
-      applyUpdateFilters();
-    }
+    function handleRowCheckboxChange(cb) {
+      const id = String(cb.dataset.id);
+      const target = activeRoomsData.find(i => String(i.id) === id);
+      
+      if (target) {
+        target.isChecked = cb.checked;
+        if (!cb.checked) {
+          target.newStatus = '';
+        }
+      }
+      applyUpdateFilters();
+    }
 
-    function handleRowStatusChange(id, value) {
-      const target = activeRoomsData.find(i => String(i.id) === String(id));
-      if (target) {
-        target.newStatus = value;
-        if (value && !target.isChecked) {
-          target.isChecked = true;
-        }
-      }
-      applyUpdateFilters();
-    }
+    function handleRowStatusChange(id, value) {
+      const target = activeRoomsData.find(i => String(i.id) === String(id));
+      if (target) {
+        target.newStatus = value;
+        if (value && !target.isChecked) {
+          target.isChecked = true;
+        }
+      }
+      applyUpdateFilters();
+    }
 
-    function toggleSelectAll(masterCb) {
-      const visibleCheckboxes = document.querySelectorAll('#updateTableBody .row-checkbox');
-      const visibleIds = Array.from(visibleCheckboxes).map(cb => String(cb.dataset.id));
+    function toggleSelectAll(masterCb) {
+      const visibleCheckboxes = document.querySelectorAll('#updateTableBody .row-checkbox');
+      const visibleIds = Array.from(visibleCheckboxes).map(cb => String(cb.dataset.id));
 
-      activeRoomsData.forEach(item => {
-        if (visibleIds.includes(String(item.id))) {
-          item.isChecked = masterCb.checked;
-          if (!masterCb.checked) {
-            item.newStatus = '';
-          }
-        }
-      });
-      applyUpdateFilters();
-    }
+      activeRoomsData.forEach(item => {
+        if (visibleIds.includes(String(item.id))) {
+          item.isChecked = masterCb.checked;
+          if (!masterCb.checked) {
+            item.newStatus = '';
+          }
+        }
+      });
+      applyUpdateFilters();
+    }
 
-    function applyStatusToSelected(statusVal) {
-      if (!statusVal) return;
-      activeRoomsData.forEach(item => {
-        if (item.isChecked) {
-          item.newStatus = statusVal;
-        }
-      });
-      applyUpdateFilters();
-    }
+    function applyStatusToSelected(statusVal) {
+      if (!statusVal) return;
+      activeRoomsData.forEach(item => {
+        if (item.isChecked) {
+          item.newStatus = statusVal;
+        }
+      });
+      applyUpdateFilters();
+    }
 
-    function updateSelectionUI() {
-      const checkedCount = activeRoomsData.filter(i => i.isChecked).length;
-      document.getElementById('selectionSummary').textContent = `เลือกแล้ว ${checkedCount} รายการ`;
-      document.getElementById('btnSubmitBulk').disabled = checkedCount === 0;
-      
-      const selectAllCb = document.getElementById('selectAllCheckbox');
-      if (selectAllCb) {
-        const visibleCheckboxes = document.querySelectorAll('#updateTableBody .row-checkbox');
-        const checkedVisible = document.querySelectorAll('#updateTableBody .row-checkbox:checked');
-        selectAllCb.checked = visibleCheckboxes.length > 0 && checkedVisible.length === visibleCheckboxes.length;
-      }
-    }
+    function updateSelectionUI() {
+      const checkedCount = activeRoomsData.filter(i => i.isChecked).length;
+      document.getElementById('selectionSummary').textContent = `เลือกแล้ว ${checkedCount} รายการ`;
+      document.getElementById('btnSubmitBulk').disabled = checkedCount === 0;
+      
+      const selectAllCb = document.getElementById('selectAllCheckbox');
+      if (selectAllCb) {
+        const visibleCheckboxes = document.querySelectorAll('#updateTableBody .row-checkbox');
+        const checkedVisible = document.querySelectorAll('#updateTableBody .row-checkbox:checked');
+        selectAllCb.checked = visibleCheckboxes.length > 0 && checkedVisible.length === visibleCheckboxes.length;
+      }
+    }
 
-    async function submitBulkStatusUpdates() {
-      const updates = activeRoomsData
-        .filter(item => item.isChecked && item.newStatus)
-        .map(item => ({ id: item.id, newStatus: item.newStatus }));
+    async function submitBulkStatusUpdates() {
+      const updates = activeRoomsData
+        .filter(item => item.isChecked && item.newStatus)
+        .map(item => ({ id: item.id, newStatus: item.newStatus }));
 
-      if (updates.length === 0) {
-        alert('กรุณาเลือกสถานะใหม่สำหรับรายการที่ติ๊กเลือกอย่างน้อย 1 รายการ');
-        return;
-      }
+      if (updates.length === 0) {
+        alert('กรุณาเลือกสถานะใหม่สำหรับรายการที่ติ๊กเลือกอย่างน้อย 1 รายการ');
+        return;
+      }
 
-      const btn = document.getElementById('btnSubmitBulk');
-      btn.disabled = true;
-      btn.textContent = 'กำลังบันทึก...';
+      const btn = document.getElementById('btnSubmitBulk');
+      btn.disabled = true;
+      btn.textContent = 'กำลังบันทึก...';
 
-      try {
-        if (!API_ENDPOINT.includes('YOUR_DEPLOYMENT_ID')) {
-          await fetch(API_ENDPOINT, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: {
-              'Content-Type': 'text/plain;charset=utf-8',
-            },
-            body: JSON.stringify({ dorm: currentDorm, updates: updates })
-          });
-        }
+      try {
+        if (!API_ENDPOINT.includes('YOUR_DEPLOYMENT_ID')) {
+          await fetch(API_ENDPOINT, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+              'Content-Type': 'text/plain;charset=utf-8',
+            },
+            body: JSON.stringify({ dorm: currentDorm, updates: updates })
+          });
+        }
 
-        alert(`อัปเดตสถานะสำเร็จ ${updates.length} รายการ`);
-        loadActiveStatusData();
-      } catch (err) {
-        alert(`เกิดข้อผิดพลาดในการอัปเดต: ${err.message}`);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'บันทึกการอัปเดตสถานะ';
-      }
-    }
-  </script>
+        alert(`อัปเดตสถานะสำเร็จ ${updates.length} รายการ`);
+        loadActiveStatusData();
+      } catch (err) {
+        alert(`เกิดข้อผิดพลาดในการอัปเดต: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'บันทึกการอัปเดตสถานะ';
+      }
+    }
+  </script>
 </body>
 </html>
