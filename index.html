@@ -4,8 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ระบบแจ้งสถานะซ่อมหอพัก สำหรับเจ้าหน้าที่</title>
-  
-  <!-- Modern Thai Fonts: Prompt & Sarabun -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -20,369 +18,69 @@
       --text: #0f172a;
       --text-muted: #64748b;
       --border: #e2e8f0;
-      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
       --radius: 12px;
       --success: #16a34a;
       --success-hover: #15803d;
-      --font-stack: 'Prompt', 'Sarabun', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Sukhumvit Set', 'Thonburi', 'Leelawadee UI', sans-serif;
+      --font-stack: 'Prompt', 'Sarabun', -apple-system, BlinkMacSystemFont, sans-serif;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: var(--font-stack);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: var(--font-stack); }
+    button, input, select { font-family: var(--font-stack) !important; }
+    body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; justify-content: center; padding: 32px 16px; }
+    .container { width: 100%; max-width: 1150px; background: var(--card-bg); border-radius: var(--radius); padding: 32px 28px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+    .view-section { display: none; }
+    .view-section.active { display: block; }
+    
+    .dorm-options { display: flex; flex-direction: column; gap: 12px; margin: 24px 0; }
+    .dorm-card { display: flex; align-items: center; padding: 16px 20px; border: 2px solid var(--border); border-radius: 12px; cursor: pointer; background: #fff; }
+    .dorm-card:hover { border-color: #93c5fd; background-color: #f0f7ff; }
+    .dorm-card.selected { border-color: var(--primary); background-color: #eff6ff; }
+    .dorm-card input { display: none; }
+    .radio-circle { width: 20px; height: 20px; border: 2px solid #cbd5e1; border-radius: 50%; margin-right: 14px; }
+    .dorm-card.selected .radio-circle { border-color: var(--primary); background: var(--primary); }
 
-    button, input, select, textarea {
-      font-family: var(--font-stack) !important;
-      -webkit-font-smoothing: antialiased;
-    }
+    .btn-primary { width: 100%; padding: 14px; font-size: 1rem; font-weight: 600; color: #fff; background-color: var(--primary); border: none; border-radius: 10px; cursor: pointer; }
+    .btn-primary:disabled { background-color: #cbd5e1; cursor: not-allowed; }
 
-    body {
-      background-color: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 32px 16px;
-    }
+    .page-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+    .header-chip { font-size: 0.85rem; color: var(--primary); background: var(--primary-light); padding: 3px 10px; border-radius: 6px; font-weight: 600; }
+    .btn-back { background: #fff; border: 1px solid var(--border); padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; color: var(--text-muted); }
 
-    .container {
-      width: 100%;
-      max-width: 1150px;
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      padding: 32px 28px;
-      box-shadow: var(--shadow);
-      border: 1px solid var(--border);
-    }
+    .tabs-nav { display: flex; gap: 8px; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
+    .tab-btn { padding: 10px 18px; border: none; background: none; font-size: 0.95rem; font-weight: 600; color: var(--text-muted); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; }
+    .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .subtab-panel { display: none; }
+    .subtab-panel.active { display: block; }
 
-    .view-section {
-      display: none;
-    }
-    .view-section.active {
-      display: block;
-    }
+    .filter-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; background: #f8fafc; padding: 12px 14px; border-radius: 8px; border: 1px solid var(--border); }
+    .search-input, .filter-select { padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem; outline: none; background: #fff; }
+    .search-input { min-width: 200px; flex: 1; }
+    .btn-sort { display: inline-flex; align-items: center; gap: 6px; background: #fff; border: 1px solid var(--border); padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
 
-    .dorm-options {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin: 24px 0;
-    }
+    .table-responsive { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; text-align: left; }
+    th { background-color: #f1f5f9; color: var(--text-muted); font-weight: 600; padding: 12px 14px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    tbody tr.selected-row { background-color: #f0fdf4; }
 
-    .dorm-card {
-      display: flex;
-      align-items: center;
-      padding: 16px 20px;
-      border: 2px solid var(--border);
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      background: #fff;
-    }
+    .status-badge { display: inline-flex; padding: 4px 10px; border-radius: 9999px; font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
+    .status-received { background-color: #f1f5f9; color: #475569; }
+    .status-document { background-color: #e0f2fe; color: #0369a1; }
+    .status-in-progress { background-color: #dbeafe; color: #1e40af; }
+    .status-waiting-parts { background-color: #fef3c7; color: #92400e; }
+    .status-repair { background-color: #f3e8ff; color: #6b21a8; }
+    .status-completed { background-color: #dcfce7; color: #166534; }
+    .status-reject { background-color: #fee2e2; color: #991b1b; }
+    .status-unclear { background-color: #ffedd5; color: #9a3412; }
+    .status-default { background-color: #f8fafc; color: #64748b; }
 
-    .dorm-card:hover {
-      border-color: #93c5fd;
-      background-color: #f0f7ff;
-    }
-
-    .dorm-card.selected {
-      border-color: var(--primary);
-      background-color: #eff6ff;
-    }
-
-    .dorm-card input[type="radio"] {
-      display: none;
-    }
-
-    .radio-circle {
-      width: 20px;
-      height: 20px;
-      border: 2px solid #cbd5e1;
-      border-radius: 50%;
-      margin-right: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .dorm-card.selected .radio-circle {
-      border-color: var(--primary);
-    }
-
-    .dorm-card.selected .radio-circle::after {
-      content: '';
-      width: 10px;
-      height: 10px;
-      background: var(--primary);
-      border-radius: 50%;
-    }
-
-    .btn-primary {
-      width: 100%;
-      padding: 14px;
-      font-size: 1rem;
-      font-weight: 600;
-      color: #fff;
-      background-color: var(--primary);
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-    }
-
-    .btn-primary:hover {
-      background-color: var(--primary-hover);
-    }
-
-    .btn-primary:disabled {
-      background-color: #cbd5e1;
-      cursor: not-allowed;
-    }
-
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-bottom: 16px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 20px;
-    }
-
-    .header-chip {
-      display: inline-block;
-      margin-top: 4px;
-      font-size: 0.85rem;
-      color: var(--primary);
-      background: var(--primary-light);
-      padding: 3px 10px;
-      border-radius: 6px;
-      font-weight: 600;
-    }
-
-    .btn-back {
-      background: #fff;
-      border: 1px solid var(--border);
-      padding: 8px 14px;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      cursor: pointer;
-      color: var(--text-muted);
-      transition: all 0.2s ease;
-    }
-
-    .btn-back:hover {
-      background: #f1f5f9;
-      color: var(--text);
-    }
-
-    .tabs-nav {
-      display: flex;
-      gap: 8px;
-      border-bottom: 2px solid var(--border);
-      margin-bottom: 20px;
-    }
-
-    .tab-btn {
-      padding: 10px 18px;
-      border: none;
-      background: none;
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      cursor: pointer;
-      border-bottom: 3px solid transparent;
-      margin-bottom: -2px;
-    }
-
-    .tab-btn.active {
-      color: var(--primary);
-      border-bottom-color: var(--primary);
-    }
-
-    .subtab-panel {
-      display: none;
-    }
-    .subtab-panel.active {
-      display: block;
-    }
-
-    .filter-bar {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-      background: #f8fafc;
-      padding: 12px 14px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-    }
-
-    .search-input {
-      padding: 8px 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 0.85rem;
-      min-width: 200px;
-      flex: 1;
-      outline: none;
-      background: #fff;
-    }
-
-    .filter-select {
-      padding: 8px 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 0.85rem;
-      outline: none;
-      background: #fff;
-      color: var(--text);
-      cursor: pointer;
-    }
-
-    .btn-sort {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: #fff;
-      border: 1px solid var(--border);
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--text);
-      cursor: pointer;
-      transition: all 0.2s ease;
-      white-space: nowrap;
-    }
-
-    .btn-sort:hover {
-      background: #f1f5f9;
-      border-color: #cbd5e1;
-    }
-
-    .table-responsive {
-      overflow-x: auto;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.9rem;
-      text-align: left;
-    }
-
-    th {
-      background-color: #f1f5f9;
-      color: var(--text-muted);
-      font-weight: 600;
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--border);
-      white-space: nowrap;
-    }
-
-    td {
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--border);
-      vertical-align: middle;
-    }
-
-    tbody tr.selected-row {
-      background-color: #f0fdf4;
-    }
-
-    .status-badge {
-      display: inline-flex;
-      padding: 4px 10px;
-      border-radius: 9999px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      white-space: nowrap;
-      border: 1px solid transparent;
-    }
-
-    .status-received      { background-color: #f1f5f9; color: #475569; border-color: #e2e8f0; }
-    .status-document      { background-color: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
-    .status-in-progress   { background-color: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
-    .status-waiting-parts { background-color: #fef3c7; color: #92400e; border-color: #fde68a; }
-    .status-repair        { background-color: #f3e8ff; color: #6b21a8; border-color: #e9d5ff; }
-    .status-completed     { background-color: #dcfce7; color: #166534; border-color: #bbf7d0; }
-    .status-reject        { background-color: #fee2e2; color: #991b1b; border-color: #fecaca; }
-    .status-unclear       { background-color: #ffedd5; color: #9a3412; border-color: #fed7aa; }
-    .status-default       { background-color: #f8fafc; color: #64748b; border-color: #e2e8f0; }
-
-    .bulk-bar {
-      margin-top: 18px;
-      padding: 16px;
-      background: #f8fafc;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .bulk-action-controls {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .select-status, .input-date {
-      padding: 8px 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-size: 0.9rem;
-      outline: none;
-      background: #fff;
-      transition: all 0.2s ease;
-    }
-
-    .input-date.input-error {
-      border-color: #ef4444 !important;
-      background-color: #fef2f2 !important;
-      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
-    }
-
-    .select-status:disabled, .input-date:disabled {
-      background-color: #f1f5f9;
-      color: #94a3b8;
-      cursor: not-allowed;
-      border-color: #e2e8f0;
-    }
-
-    .btn-bulk-update {
-      padding: 8px 18px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: #fff;
-      background-color: var(--success);
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-    }
-
-    .btn-bulk-update:hover {
-      background-color: var(--success-hover);
-    }
-
-    .btn-bulk-update:disabled {
-      background-color: #cbd5e1;
-      cursor: not-allowed;
-    }
+    .bulk-bar { margin-top: 18px; padding: 16px; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .select-status, .input-date { padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; outline: none; background: #fff; }
+    .input-date.input-error { border-color: #ef4444 !important; background-color: #fef2f2 !important; }
+    .input-date:disabled, .select-status:disabled { background-color: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
+    .btn-bulk-update { padding: 8px 18px; font-size: 0.9rem; font-weight: 600; color: #fff; background-color: var(--success); border: none; border-radius: 8px; cursor: pointer; }
+    .btn-bulk-update:disabled { background-color: #cbd5e1; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -395,28 +93,23 @@
 
       <div class="dorm-options">
         <label class="dorm-card" onclick="selectDorm(this, 'หอพักนักศึกษาแพทย์ชาย 14 ชั้น')">
-          <input type="radio" name="dorm">
-          <span class="radio-circle"></span>
+          <input type="radio" name="dorm"><span class="radio-circle"></span>
           <span>หอพักนักศึกษาแพทย์ชาย 14 ชั้น</span>
         </label>
         <label class="dorm-card" onclick="selectDorm(this, 'หอพักนักศึกษาแพทย์ชาย 3 (หอพักนักศึกษาแพทย์หญิง 2)')">
-          <input type="radio" name="dorm">
-          <span class="radio-circle"></span>
+          <input type="radio" name="dorm"><span class="radio-circle"></span>
           <span>หอพักนักศึกษาแพทย์ชาย 3 (หอพักนักศึกษาแพทย์หญิง 2)</span>
         </label>
         <label class="dorm-card" onclick="selectDorm(this, 'หอพักนักศึกษาแพทย์หญิง 7')">
-          <input type="radio" name="dorm">
-          <span class="radio-circle"></span>
+          <input type="radio" name="dorm"><span class="radio-circle"></span>
           <span>หอพักนักศึกษาแพทย์หญิง 7</span>
         </label>
         <label class="dorm-card" onclick="selectDorm(this, 'หอพักนักศึกษาแพทย์หญิง 4/37')">
-          <input type="radio" name="dorm">
-          <span class="radio-circle"></span>
+          <input type="radio" name="dorm"><span class="radio-circle"></span>
           <span>หอพักนักศึกษาแพทย์หญิง 4/37</span>
         </label>
         <label class="dorm-card" onclick="selectDorm(this, 'หอพักนักศึกษาแพทย์หญิง Lollipop')">
-          <input type="radio" name="dorm">
-          <span class="radio-circle"></span>
+          <input type="radio" name="dorm"><span class="radio-circle"></span>
           <span>หอพักนักศึกษาแพทย์หญิง Lollipop</span>
         </label>
       </div>
@@ -443,7 +136,6 @@
       <div id="tab-active-rooms" class="subtab-panel active">
         <div class="filter-bar">
           <input type="text" id="searchInput1" class="search-input" placeholder="ค้นหาเลขห้อง หรือปัญหา..." onkeyup="applyDashboardFilters()">
-          
           <select id="categoryFilter1" class="filter-select" onchange="applyDashboardFilters()">
             <option value="">หมวดหมู่ปัญหาทั้งหมด</option>
             <option value="หลอดไฟ">หลอดไฟ</option>
@@ -455,7 +147,6 @@
             <option value="เฟอร์นิเจอร์">เฟอร์นิเจอร์และกระจก</option>
             <option value="อื่น">อื่น ๆ</option>
           </select>
-
           <select id="statusFilter1" class="filter-select" onchange="applyDashboardFilters()">
             <option value="">สถานะทั้งหมด</option>
             <option value="ได้รับคำร้องแล้ว">ได้รับคำร้องแล้ว</option>
@@ -467,11 +158,9 @@
             <option value="ไม่รับคำร้อง">ไม่รับคำร้อง</option>
             <option value="คำร้องไม่ชัดเจน">คำร้องไม่ชัดเจน</option>
           </select>
-
           <button class="btn-sort" id="sortBtn1" onclick="toggleDashboardSort()">
             <span id="sortIcon1">⏱️</span> เรียงตามเวลาแจ้ง: <span id="sortText1">แจ้งนานสุด ➔ ล่าสุด</span>
           </button>
-
           <span id="recordCount1" style="font-size: 0.85rem; color: var(--text-muted); margin-left: auto;">กำลังโหลด...</span>
         </div>
 
@@ -487,7 +176,7 @@
               </tr>
             </thead>
             <tbody id="tableBody1">
-              <tr><td colspan="5" style="text-align:center; padding: 24px; color: var(--text-muted);">กำลังโหลดข้อมูล...</td></tr>
+              <tr><td colspan="5" style="text-align:center; padding: 24px;">กำลังโหลดข้อมูล...</td></tr>
             </tbody>
           </table>
         </div>
@@ -496,8 +185,7 @@
       <!-- Subtab 2: Bulk Update Status Selection -->
       <div id="tab-update-status" class="subtab-panel">
         <div class="filter-bar">
-          <input type="text" id="roomFilterInput" class="search-input" placeholder="พิมพ์เลขห้อง หรือปัญหาเพื่อค้นหา..." onkeyup="applyUpdateFilters()">
-          
+          <input type="text" id="roomFilterInput" class="search-input" placeholder="พิมพ์เลขห้อง หรือปัญหา..." onkeyup="applyUpdateFilters()">
           <select id="categoryFilter2" class="filter-select" onchange="applyUpdateFilters()">
             <option value="">หมวดหมู่ปัญหาทั้งหมด</option>
             <option value="หลอดไฟ">หลอดไฟ</option>
@@ -509,7 +197,6 @@
             <option value="เฟอร์นิเจอร์">เฟอร์นิเจอร์และกระจก</option>
             <option value="อื่น">อื่น ๆ</option>
           </select>
-
           <select id="statusFilter2" class="filter-select" onchange="applyUpdateFilters()">
             <option value="">สถานะปัจจุบันทั้งหมด</option>
             <option value="ได้รับคำร้องแล้ว">ได้รับคำร้องแล้ว</option>
@@ -521,11 +208,9 @@
             <option value="ไม่รับคำร้อง">ไม่รับคำร้อง</option>
             <option value="คำร้องไม่ชัดเจน">คำร้องไม่ชัดเจน</option>
           </select>
-
           <button class="btn-sort" id="sortBtn2" onclick="toggleUpdateSort()">
             <span id="sortIcon2">⏱️</span> เรียงตามเวลาแจ้ง: <span id="sortText2">แจ้งนานสุด ➔ ล่าสุด</span>
           </button>
-
           <span id="selectionSummary" style="font-size: 0.85rem; font-weight: 600; color: var(--primary); margin-left: auto;">เลือกแล้ว 0 รายการ</span>
         </div>
 
@@ -533,25 +218,22 @@
           <table>
             <thead>
               <tr>
-                <th style="width: 44px; text-align: center;">
-                  <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)">
-                </th>
+                <th style="width: 44px; text-align: center;"><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)"></th>
                 <th style="min-width: 120px;">วันที่แจ้ง</th>
                 <th>ห้อง</th>
                 <th>หมวดหมู่ / ปัญหา</th>
                 <th>รายละเอียด</th>
                 <th>สถานะปัจจุบัน</th>
                 <th style="min-width: 170px;">เลือกสถานะใหม่ (แต่ละแถว)</th>
-                <th style="min-width: 150px;">วันที่ช่างจะเข้าห้อง <span style="color: #ef4444;">*</span></th>
+                <th style="min-width: 150px;">วันที่ช่างจะเข้าห้อง</th>
               </tr>
             </thead>
             <tbody id="updateTableBody">
-              <tr><td colspan="8" style="text-align:center; padding: 24px; color: var(--text-muted);">กำลังโหลดรายการ...</td></tr>
+              <tr><td colspan="8" style="text-align:center; padding: 24px;">กำลังโหลดรายการ...</td></tr>
             </tbody>
           </table>
         </div>
 
-        <!-- Bulk Action Controls -->
         <div class="bulk-bar">
           <div class="bulk-action-controls">
             <span style="font-size: 0.9rem; font-weight: 600;">เปลี่ยนสถานะทุกแถวที่เลือกพร้อมกัน:</span>
@@ -565,7 +247,7 @@
               <option value="ไม่รับคำร้อง">ไม่รับคำร้อง</option>
               <option value="คำร้องไม่ชัดเจน">คำร้องไม่ชัดเจน</option>
             </select>
-            <input type="date" id="bulkDateInput" class="input-date" style="display: none;" title="ระบุวันที่ช่างจะเข้าห้องพร้อมกัน" onchange="applyDateToSelected(this.value)">
+            <input type="date" id="bulkDateInput" class="input-date" style="display: none;" onchange="applyDateToSelected(this.value)">
           </div>
 
           <button id="btnSubmitBulk" class="btn-bulk-update" disabled onclick="submitBulkStatusUpdates()">
@@ -579,7 +261,6 @@
   <script>
     let currentDorm = "";
     let activeRoomsData = [];
-
     let sortOrderTab1 = 'asc';
     let sortOrderTab2 = 'asc';
 
@@ -588,8 +269,7 @@
     function formatThaiDisplayDate(dateStr) {
       if (!dateStr) return "";
       try {
-        const clean = String(dateStr).trim();
-        const parts = clean.split("-");
+        const parts = String(dateStr).trim().split("-");
         if (parts.length === 3) {
           const yr = parseInt(parts[0], 10);
           const thYr = yr > 2400 ? yr : yr + 543;
@@ -614,19 +294,19 @@
       const now = new Date();
       const diffMs = now.getTime() - ticketDate.getTime();
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
       let agoStr = diffDays <= 0 ? 'วันนี้' : `${diffDays} วันที่แล้ว`;
+
       return `<div style="white-space: nowrap; font-weight: 500;">${dateStr}</div><div style="white-space: nowrap; font-size: 0.78rem; color: #94a3b8; margin-top: 2px;">${agoStr}</div>`;
     }
 
     function getBadgeClass(status) {
       if (!status) return 'status-default';
       const s = status.trim();
-      if (s.includes('ได้รับคำร้องแล้ว')) return 'status-received';
-      if (s.includes('แจ้งซ่อมในระบบแล้ว')) return 'status-document';
+      if (s.includes('ได้รับคำร้อง')) return 'status-received';
+      if (s.includes('แจ้งซ่อมในระบบ')) return 'status-document';
       if (s.includes('กำลังดำเนินการ')) return 'status-in-progress';
       if (s.includes('รอเบิกอะไหล่')) return 'status-waiting-parts';
-      if (s.includes('ช่างจะเข้าซ่อมในห้อง')) return 'status-repair';
+      if (s.includes('ช่างจะเข้าซ่อม')) return 'status-repair';
       if (s.includes('สำเร็จ')) return 'status-completed';
       if (s.includes('ไม่รับคำร้อง')) return 'status-reject';
       if (s.includes('คำร้องไม่ชัดเจน')) return 'status-unclear';
@@ -669,18 +349,14 @@
 
     async function loadActiveStatusData() {
       try {
-        if (API_ENDPOINT.includes('YOUR_DEPLOYMENT_ID')) {
-          activeRoomsData = [];
-        } else {
-          const res = await fetch(`${API_ENDPOINT}?dorm=${encodeURIComponent(currentDorm)}`);
-          const fetched = await res.json();
-          activeRoomsData = (fetched || []).map(item => ({ 
-            ...item, 
-            isChecked: false, 
-            newStatus: '',
-            appointmentDate: item.appointmentDate ? String(item.appointmentDate).trim() : ''
-          }));
-        }
+        const res = await fetch(`${API_ENDPOINT}?dorm=${encodeURIComponent(currentDorm)}`);
+        const fetched = await res.json();
+        activeRoomsData = (fetched || []).map(item => ({ 
+          ...item, 
+          isChecked: false, 
+          newStatus: '',
+          appointmentDate: item.appointmentDate ? String(item.appointmentDate).trim() : ''
+        }));
 
         applyDashboardFilters();
         applyUpdateFilters();
@@ -692,16 +368,12 @@
     function compareTimestamps(a, b, order = 'asc') {
       const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
       const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
-
       if (!isNaN(timeA) && !isNaN(timeB) && timeA !== 0 && timeB !== 0) {
         return order === 'asc' ? timeA - timeB : timeB - timeA;
       }
-
-      const strA = String(a.timestamp || '');
-      const strB = String(b.timestamp || '');
       return order === 'asc' 
-        ? strA.localeCompare(strB, undefined, { numeric: true, sensitivity: 'base' })
-        : strB.localeCompare(strA, undefined, { numeric: true, sensitivity: 'base' });
+        ? String(a.timestamp || '').localeCompare(String(b.timestamp || ''))
+        : String(b.timestamp || '').localeCompare(String(a.timestamp || ''));
     }
 
     function toggleDashboardSort() {
@@ -716,14 +388,9 @@
       const stat = (document.getElementById('statusFilter1').value || '').toLowerCase().trim();
 
       let filtered = activeRoomsData.filter(item => {
-        const textMatch = !search || 
-          (item.roomNumber || '').toLowerCase().includes(search) || 
-          (item.category || '').toLowerCase().includes(search) || 
-          (item.detail || '').toLowerCase().includes(search);
-        
+        const textMatch = !search || (item.roomNumber || '').toLowerCase().includes(search) || (item.category || '').toLowerCase().includes(search) || (item.detail || '').toLowerCase().includes(search);
         const catMatch = !cat || (item.category || '').toLowerCase().includes(cat);
         const statMatch = !stat || (item.activeStatus || '').toLowerCase().includes(stat);
-
         return textMatch && catMatch && statMatch;
       });
 
@@ -755,9 +422,7 @@
           <td>${item.category || '-'}</td>
           <td>${item.detail || '-'}</td>
           <td>
-            <span class="status-badge ${getBadgeClass(item.activeStatus)}">
-              ${item.activeStatus || 'ไม่มีสถานะ'}
-            </span>
+            <span class="status-badge ${getBadgeClass(item.activeStatus)}">${item.activeStatus || 'ไม่มีสถานะ'}</span>
             ${apptBadge}
           </td>
         </tr>
@@ -776,21 +441,14 @@
       const stat = (document.getElementById('statusFilter2').value || '').toLowerCase().trim();
 
       let filtered = activeRoomsData.filter(item => {
-        const textMatch = !search || 
-          (item.roomNumber || '').toLowerCase().includes(search) || 
-          (item.category || '').toLowerCase().includes(search) || 
-          (item.detail || '').toLowerCase().includes(search);
-        
+        const textMatch = !search || (item.roomNumber || '').toLowerCase().includes(search) || (item.category || '').toLowerCase().includes(search) || (item.detail || '').toLowerCase().includes(search);
         const catMatch = !cat || (item.category || '').toLowerCase().includes(cat);
         const statMatch = !stat || (item.activeStatus || '').toLowerCase().includes(stat);
-
         return textMatch && catMatch && statMatch;
       });
 
       filtered.sort((a, b) => {
-        if (a.isChecked === b.isChecked) {
-          return compareTimestamps(a, b, sortOrderTab2);
-        }
+        if (a.isChecked === b.isChecked) return compareTimestamps(a, b, sortOrderTab2);
         return a.isChecked ? -1 : 1;
       });
 
@@ -851,12 +509,9 @@
     function handleRowCheckboxChange(cb) {
       const id = String(cb.dataset.id);
       const target = activeRoomsData.find(i => String(i.id) === id);
-      
       if (target) {
         target.isChecked = cb.checked;
-        if (!cb.checked) {
-          target.newStatus = '';
-        }
+        if (!cb.checked) target.newStatus = '';
       }
       applyUpdateFilters();
     }
@@ -865,45 +520,34 @@
       const target = activeRoomsData.find(i => String(i.id) === String(id));
       if (target) {
         target.newStatus = value;
-        if (value && !target.isChecked) {
-          target.isChecked = true;
-        }
+        if (value && !target.isChecked) target.isChecked = true;
       }
       applyUpdateFilters();
-      
       if (value === 'ช่างจะเข้าซ่อมในห้อง' && !target.appointmentDate) {
         setTimeout(() => {
-          const dateInput = document.getElementById(`date-input-${id}`);
-          if (dateInput) dateInput.focus();
+          const inputEl = document.getElementById(`date-input-${id}`);
+          if (inputEl) inputEl.focus();
         }, 50);
       }
     }
 
     function handleRowDateChange(id, dateValue) {
       const target = activeRoomsData.find(i => String(i.id) === String(id));
-      if (target) {
-        target.appointmentDate = dateValue;
-      }
+      if (target) target.appointmentDate = dateValue;
       const inputEl = document.getElementById(`date-input-${id}`);
       if (inputEl) {
-        if (dateValue) {
-          inputEl.classList.remove('input-error');
-        } else {
-          inputEl.classList.add('input-error');
-        }
+        if (dateValue) inputEl.classList.remove('input-error');
+        else inputEl.classList.add('input-error');
       }
     }
 
     function toggleSelectAll(masterCb) {
       const visibleCheckboxes = document.querySelectorAll('#updateTableBody .row-checkbox');
       const visibleIds = Array.from(visibleCheckboxes).map(cb => String(cb.dataset.id));
-
       activeRoomsData.forEach(item => {
         if (visibleIds.includes(String(item.id))) {
           item.isChecked = masterCb.checked;
-          if (!masterCb.checked) {
-            item.newStatus = '';
-          }
+          if (!masterCb.checked) item.newStatus = '';
         }
       });
       applyUpdateFilters();
@@ -921,9 +565,7 @@
 
       if (!statusVal) return;
       activeRoomsData.forEach(item => {
-        if (item.isChecked) {
-          item.newStatus = statusVal;
-        }
+        if (item.isChecked) item.newStatus = statusVal;
       });
       applyUpdateFilters();
     }
@@ -952,17 +594,14 @@
 
     async function submitBulkStatusUpdates() {
       const checkedItems = activeRoomsData.filter(item => item.isChecked && item.newStatus);
-
       if (checkedItems.length === 0) {
         alert('กรุณาเลือกสถานะใหม่สำหรับรายการที่ติ๊กเลือกอย่างน้อย 1 รายการ');
         return;
       }
 
-      // บังคับตรวจสอบ: ต้องมีวันที่สำหรับทุกห้องที่เลือก "ช่างจะเข้าซ่อมในห้อง"
       const missingDateItem = checkedItems.find(item => item.newStatus === 'ช่างจะเข้าซ่อมในห้อง' && !item.appointmentDate);
       if (missingDateItem) {
         alert(`❌ ไม่สามารถบันทึกได้:\nกรุณาระบุ "วันที่ช่างจะเข้าห้อง" สำหรับห้อง ${missingDateItem.roomNumber || '-'}`);
-        
         const errorInput = document.getElementById(`date-input-${missingDateItem.id}`);
         if (errorInput) {
           errorInput.classList.add('input-error');
@@ -983,17 +622,13 @@
 
       try {
         const payload = JSON.stringify({ dorm: currentDorm, updates: updates });
-
         const response = await fetch(API_ENDPOINT, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
-          },
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
           body: payload
         });
 
         const result = await response.json();
-
         if (result && result.status === 'success') {
           alert(`อัปเดตสถานะสำเร็จ ${updates.length} รายการ`);
           await loadActiveStatusData();
