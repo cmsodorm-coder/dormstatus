@@ -343,9 +343,10 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      flex-wrap: wrap;
     }
 
-    .select-status {
+    .select-status, .input-date {
       padding: 8px 12px;
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -355,7 +356,7 @@
       transition: opacity 0.2s ease;
     }
 
-    .select-status:disabled {
+    .select-status:disabled, .input-date:disabled {
       background-color: #f1f5f9;
       color: #94a3b8;
       cursor: not-allowed;
@@ -469,7 +470,7 @@
           </select>
 
           <button class="btn-sort" id="sortBtn1" onclick="toggleDashboardSort()">
-            <span id="sortIcon1">🔢</span> เรียงเลขห้อง: <span id="sortText1">น้อย ➔ มาก</span>
+            <span id="sortIcon1">⏱️</span> เรียงตามเวลาแจ้ง: <span id="sortText1">แจ้งนานสุด ➔ ล่าสุด</span>
           </button>
 
           <span id="recordCount1" style="font-size: 0.85rem; color: var(--text-muted); margin-left: auto;">กำลังโหลด...</span>
@@ -479,10 +480,10 @@
           <table>
             <thead>
               <tr>
+                <th style="min-width: 120px;">วันที่แจ้ง</th>
                 <th>ห้อง</th>
                 <th>หมวดหมู่ / ปัญหา</th>
                 <th>รายละเอียด</th>
-                <th>วันที่แจ้ง</th>
                 <th>สถานะล่าสุด</th>
               </tr>
             </thead>
@@ -523,7 +524,7 @@
           </select>
 
           <button class="btn-sort" id="sortBtn2" onclick="toggleUpdateSort()">
-            <span id="sortIcon2">🔢</span> เรียงเลขห้อง: <span id="sortText2">น้อย ➔ มาก</span>
+            <span id="sortIcon2">⏱️</span> เรียงตามเวลาแจ้ง: <span id="sortText2">แจ้งนานสุด ➔ ล่าสุด</span>
           </button>
 
           <span id="selectionSummary" style="font-size: 0.85rem; font-weight: 600; color: var(--primary); margin-left: auto;">เลือกแล้ว 0 รายการ</span>
@@ -536,15 +537,17 @@
                 <th style="width: 44px; text-align: center;">
                   <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)">
                 </th>
+                <th style="min-width: 120px;">วันที่แจ้ง</th>
                 <th>ห้อง</th>
                 <th>หมวดหมู่ / ปัญหา</th>
                 <th>รายละเอียด</th>
                 <th>สถานะปัจจุบัน</th>
                 <th style="min-width: 170px;">เลือกสถานะใหม่ (แต่ละแถว)</th>
+                <th style="min-width: 150px;">วันที่ช่างจะเข้าห้อง</th>
               </tr>
             </thead>
             <tbody id="updateTableBody">
-              <tr><td colspan="6" style="text-align:center; padding: 24px; color: var(--text-muted);">กำลังโหลดรายการ...</td></tr>
+              <tr><td colspan="8" style="text-align:center; padding: 24px; color: var(--text-muted);">กำลังโหลดรายการ...</td></tr>
             </tbody>
           </table>
         </div>
@@ -563,6 +566,7 @@
               <option value="ไม่รับคำร้อง">ไม่รับคำร้อง</option>
               <option value="คำร้องไม่ชัดเจน">คำร้องไม่ชัดเจน</option>
             </select>
+            <input type="date" id="bulkDateInput" class="input-date" style="display: none;" title="ระบุวันที่ช่างจะเข้าห้องพร้อมกัน" onchange="applyDateToSelected(this.value)">
           </div>
 
           <button id="btnSubmitBulk" class="btn-bulk-update" disabled onclick="submitBulkStatusUpdates()">
@@ -581,6 +585,26 @@
     let sortOrderTab2 = 'asc';
 
     const API_ENDPOINT = "https://script.google.com/macros/s/AKfycbxPW-8OMeJjTeuFnZa6_yIKG6GnMqlxmYnU6wnCif_fbpCAfRewV63c32G0U3jGyP-_JA/exec";
+
+    function formatDaysAgo(timestamp) {
+      if (!timestamp) return '-';
+      const ticketDate = new Date(timestamp);
+      if (isNaN(ticketDate.getTime())) return String(timestamp);
+
+      const d = ticketDate.getDate();
+      const m = ticketDate.getMonth() + 1;
+      let yr = ticketDate.getFullYear();
+      let thYear = yr > 2400 ? yr : yr + 543;
+      let yrShort = String(thYear).slice(-2);
+      const dateStr = `${d}/${m}/${yrShort}`;
+
+      const now = new Date();
+      const diffMs = now.getTime() - ticketDate.getTime();
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+      let agoStr = diffDays <= 0 ? 'วันนี้' : `${diffDays} วันที่แล้ว`;
+      return `<div style="white-space: nowrap; font-weight: 500;">${dateStr}</div><div style="white-space: nowrap; font-size: 0.78rem; color: #94a3b8; margin-top: 2px;">${agoStr}</div>`;
+    }
 
     function getBadgeClass(status) {
       if (!status) return 'status-default';
@@ -637,7 +661,12 @@
         } else {
           const res = await fetch(`${API_ENDPOINT}?dorm=${encodeURIComponent(currentDorm)}`);
           const fetched = await res.json();
-          activeRoomsData = (fetched || []).map(item => ({ ...item, isChecked: false, newStatus: '' }));
+          activeRoomsData = (fetched || []).map(item => ({ 
+            ...item, 
+            isChecked: false, 
+            newStatus: '',
+            appointmentDate: ''
+          }));
         }
 
         applyDashboardFilters();
@@ -647,17 +676,24 @@
       }
     }
 
-    function compareRoomNumbers(a, b, order = 'asc') {
-      const roomA = String(a.roomNumber || '');
-      const roomB = String(b.roomNumber || '');
+    function compareTimestamps(a, b, order = 'asc') {
+      const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+      const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+
+      if (!isNaN(timeA) && !isNaN(timeB) && timeA !== 0 && timeB !== 0) {
+        return order === 'asc' ? timeA - timeB : timeB - timeA;
+      }
+
+      const strA = String(a.timestamp || '');
+      const strB = String(b.timestamp || '');
       return order === 'asc' 
-        ? roomA.localeCompare(roomB, undefined, { numeric: true, sensitivity: 'base' })
-        : roomB.localeCompare(roomA, undefined, { numeric: true, sensitivity: 'base' });
+        ? strA.localeCompare(strB, undefined, { numeric: true, sensitivity: 'base' })
+        : strB.localeCompare(strA, undefined, { numeric: true, sensitivity: 'base' });
     }
 
     function toggleDashboardSort() {
       sortOrderTab1 = sortOrderTab1 === 'asc' ? 'desc' : 'asc';
-      document.getElementById('sortText1').textContent = sortOrderTab1 === 'asc' ? 'น้อย ➔ มาก' : 'มาก ➔ น้อย';
+      document.getElementById('sortText1').textContent = sortOrderTab1 === 'asc' ? 'แจ้งนานสุด ➔ ล่าสุด' : 'ล่าสุด ➔ แจ้งนานสุด';
       applyDashboardFilters();
     }
 
@@ -678,7 +714,7 @@
         return textMatch && catMatch && statMatch;
       });
 
-      filtered.sort((a, b) => compareRoomNumbers(a, b, sortOrderTab1));
+      filtered.sort((a, b) => compareTimestamps(a, b, sortOrderTab1));
       renderDashboardTable(filtered);
     }
 
@@ -695,10 +731,10 @@
       count.textContent = `พบ ${dataList.length} รายการ`;
       tbody.innerHTML = dataList.map(item => `
         <tr>
+          <td><span style="font-size: 0.85rem; color: var(--text);">${formatDaysAgo(item.timestamp)}</span></td>
           <td><strong>${item.roomNumber || '-'}</strong></td>
           <td>${item.category || '-'}</td>
           <td>${item.detail || '-'}</td>
-          <td>${item.timestamp || '-'}</td>
           <td>
             <span class="status-badge ${getBadgeClass(item.activeStatus)}">
               ${item.activeStatus || 'ไม่มีสถานะ'}
@@ -710,7 +746,7 @@
 
     function toggleUpdateSort() {
       sortOrderTab2 = sortOrderTab2 === 'asc' ? 'desc' : 'asc';
-      document.getElementById('sortText2').textContent = sortOrderTab2 === 'asc' ? 'น้อย ➔ มาก' : 'มาก ➔ น้อย';
+      document.getElementById('sortText2').textContent = sortOrderTab2 === 'asc' ? 'แจ้งนานสุด ➔ ล่าสุด' : 'ล่าสุด ➔ แจ้งนานสุด';
       applyUpdateFilters();
     }
 
@@ -733,7 +769,7 @@
 
       filtered.sort((a, b) => {
         if (a.isChecked === b.isChecked) {
-          return compareRoomNumbers(a, b, sortOrderTab2);
+          return compareTimestamps(a, b, sortOrderTab2);
         }
         return a.isChecked ? -1 : 1;
       });
@@ -745,15 +781,18 @@
       const tbody = document.getElementById('updateTableBody');
 
       if (!dataList || dataList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:24px;">ไม่พบรายการที่ตรงกับเงื่อนไข</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:24px;">ไม่พบรายการที่ตรงกับเงื่อนไข</td></tr>';
         return;
       }
 
-      tbody.innerHTML = dataList.map(item => `
+      tbody.innerHTML = dataList.map(item => {
+        const isRepairActive = item.isChecked && item.newStatus === 'ช่างจะเข้าซ่อมในห้อง';
+        return `
         <tr id="row-${item.id}" class="${item.isChecked ? 'selected-row' : ''}">
           <td style="text-align: center;">
             <input type="checkbox" class="row-checkbox" data-id="${item.id}" ${item.isChecked ? 'checked' : ''} onchange="handleRowCheckboxChange(this)">
           </td>
+          <td><span style="font-size: 0.85rem; color: var(--text);">${formatDaysAgo(item.timestamp)}</span></td>
           <td><strong>${item.roomNumber || '-'}</strong></td>
           <td>${item.category || '-'}</td>
           <td>${item.detail || '-'}</td>
@@ -772,8 +811,11 @@
               <option value="คำร้องไม่ชัดเจน" ${item.newStatus === 'คำร้องไม่ชัดเจน' ? 'selected' : ''}>คำร้องไม่ชัดเจน</option>
             </select>
           </td>
+          <td>
+            <input type="date" class="input-date row-date-input" data-id="${item.id}" value="${item.appointmentDate || ''}" ${!isRepairActive ? 'disabled' : ''} onchange="handleRowDateChange('${item.id}', this.value)">
+          </td>
         </tr>
-      `).join('');
+      `}).join('');
 
       updateSelectionUI();
     }
@@ -786,6 +828,7 @@
         target.isChecked = cb.checked;
         if (!cb.checked) {
           target.newStatus = '';
+          target.appointmentDate = '';
         }
       }
       applyUpdateFilters();
@@ -798,8 +841,18 @@
         if (value && !target.isChecked) {
           target.isChecked = true;
         }
+        if (value !== 'ช่างจะเข้าซ่อมในห้อง') {
+          target.appointmentDate = '';
+        }
       }
       applyUpdateFilters();
+    }
+
+    function handleRowDateChange(id, dateValue) {
+      const target = activeRoomsData.find(i => String(i.id) === id);
+      if (target) {
+        target.appointmentDate = dateValue;
+      }
     }
 
     function toggleSelectAll(masterCb) {
@@ -811,6 +864,7 @@
           item.isChecked = masterCb.checked;
           if (!masterCb.checked) {
             item.newStatus = '';
+            item.appointmentDate = '';
           }
         }
       });
@@ -818,10 +872,30 @@
     }
 
     function applyStatusToSelected(statusVal) {
+      const bulkDateInput = document.getElementById('bulkDateInput');
+      if (statusVal === 'ช่างจะเข้าซ่อมในห้อง') {
+        bulkDateInput.style.display = 'inline-block';
+      } else {
+        bulkDateInput.style.display = 'none';
+        bulkDateInput.value = '';
+      }
+
       if (!statusVal) return;
       activeRoomsData.forEach(item => {
         if (item.isChecked) {
           item.newStatus = statusVal;
+          if (statusVal !== 'ช่างจะเข้าซ่อมในห้อง') {
+            item.appointmentDate = '';
+          }
+        }
+      });
+      applyUpdateFilters();
+    }
+
+    function applyDateToSelected(dateVal) {
+      activeRoomsData.forEach(item => {
+        if (item.isChecked && item.newStatus === 'ช่างจะเข้าซ่อมในห้อง') {
+          item.appointmentDate = dateVal;
         }
       });
       applyUpdateFilters();
@@ -841,45 +915,55 @@
     }
 
     async function submitBulkStatusUpdates() {
-  const updates = activeRoomsData
-    .filter(item => item.isChecked && item.newStatus)
-    .map(item => ({ id: item.id, newStatus: item.newStatus }));
+      const checkedItems = activeRoomsData.filter(item => item.isChecked && item.newStatus);
 
-  if (updates.length === 0) {
-    alert('กรุณาเลือกสถานะใหม่สำหรับรายการที่ติ๊กเลือกอย่างน้อย 1 รายการ');
-    return;
-  }
+      if (checkedItems.length === 0) {
+        alert('กรุณาเลือกสถานะใหม่สำหรับรายการที่ติ๊กเลือกอย่างน้อย 1 รายการ');
+        return;
+      }
 
-  const btn = document.getElementById('btnSubmitBulk');
-  btn.disabled = true;
-  btn.textContent = 'กำลังบันทึก...';
+      const missingDate = checkedItems.find(item => item.newStatus === 'ช่างจะเข้าซ่อมในห้อง' && !item.appointmentDate);
+      if (missingDate) {
+        alert(`กรุณาระบุวันที่ช่างจะเข้าห้องสำหรับห้อง ${missingDate.roomNumber || ''}`);
+        return;
+      }
 
-  try {
-    const payload = JSON.stringify({ dorm: currentDorm, updates: updates });
+      const updates = checkedItems.map(item => ({ 
+        id: item.id, 
+        newStatus: item.newStatus,
+        appointmentDate: item.newStatus === 'ช่างจะเข้าซ่อมในห้อง' ? item.appointmentDate : null
+      }));
 
-    const response = await fetch(API_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
-      },
-      body: payload
-    });
+      const btn = document.getElementById('btnSubmitBulk');
+      btn.disabled = true;
+      btn.textContent = 'กำลังบันทึก...';
 
-    const result = await response.json();
+      try {
+        const payload = JSON.stringify({ dorm: currentDorm, updates: updates });
 
-    if (result && result.status === 'success') {
-      alert(`อัปเดตสถานะสำเร็จ ${updates.length} รายการ`);
-      await loadActiveStatusData();
-    } else {
-      throw new Error(result.message || 'การอัปเดตล้มเหลว');
+        const response = await fetch(API_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+          },
+          body: payload
+        });
+
+        const result = await response.json();
+
+        if (result && result.status === 'success') {
+          alert(`อัปเดตสถานะสำเร็จ ${updates.length} รายการ`);
+          await loadActiveStatusData();
+        } else {
+          throw new Error(result.message || 'การอัปเดตล้มเหลว');
+        }
+      } catch (err) {
+        alert(`เกิดข้อผิดพลาดในการอัปเดต: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'บันทึกการอัปเดตสถานะ';
+      }
     }
-  } catch (err) {
-    alert(`เกิดข้อผิดพลาดในการอัปเดต: ${err.message}`);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'บันทึกการอัปเดตสถานะ';
-  }
-}
   </script>
 </body>
 </html>
