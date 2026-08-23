@@ -1,0 +1,43 @@
+export default async function handler(req, res) {
+  // Read secrets securely from Vercel's environment
+  const SYSTEM_PASSWORD = process.env.STAFF_PASSWORD;
+  const APPS_SCRIPT_URL = process.env.APPS_SCRIPT_URL;
+
+  // Verify client authorization header
+  const clientPassword = req.headers['x-staff-auth'];
+
+  if (!clientPassword || clientPassword !== SYSTEM_PASSWORD) {
+    return res.status(401).json({ success: false, message: 'Unauthorized' });
+  }
+
+  try {
+    // 1. Password Verification Check
+    if (req.method === 'GET' && req.query.action === 'verify') {
+      return res.status(200).json({ success: true });
+    }
+
+    // 2. Fetch Data from Google Apps Script
+    if (req.method === 'GET') {
+      const dorm = req.query.dorm || '';
+      const googleResponse = await fetch(`${APPS_SCRIPT_URL}?dorm=${encodeURIComponent(dorm)}`);
+      const data = await googleResponse.json();
+      return res.status(200).json(data);
+    }
+
+    // 3. Post Updates to Google Apps Script
+    if (req.method === 'POST') {
+      const payload = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+      const googleResponse = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+        body: payload
+      });
+      const data = await googleResponse.json();
+      return res.status(200).json(data);
+    }
+
+    return res.status(405).json({ message: 'Method Not Allowed' });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}

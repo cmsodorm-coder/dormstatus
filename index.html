@@ -545,7 +545,7 @@
     <input type="password" id="authPasswordInput" class="auth-input" placeholder="กรอกรหัสผ่าน..." onkeydown="handleAuthKeyDown(event)">
     <div id="authErrorMsg" class="auth-error">❌ รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง</div>
     
-    <button class="btn-primary" onclick="verifyPassword()">เข้าสู่ระบบ</button>
+    <button class="btn-primary" id="btnAuthSubmit" onclick="verifyPassword()">เข้าสู่ระบบ</button>
   </div>
 
   <div class="container" id="mainAppContainer" style="display: none;">
@@ -699,15 +699,14 @@
   </div>
 
   <script>
-    // Hardcoded password for staff gate
-    const SYSTEM_PASSWORD = "5271";
+    // Local Vercel Serverless Function proxy route
+    const API_ENDPOINT = "/api/data";
 
+    let sessionPassword = "";
     let currentDorm = "";
     let activeRoomsData = [];
     let currentMode = "active";
     let currentSortOrder = 'asc';
-
-    const API_ENDPOINT = "https://script.google.com/macros/s/AKfycbxPW-8OMeJjTeuFnZa6_yIKG6GnMqlxmYnU6wnCif_fbpCAfRewV63c32G0U3jGyP-_JA/exec";
 
     function handleAuthKeyDown(event) {
       if (event.key === 'Enter') {
@@ -715,18 +714,44 @@
       }
     }
 
-    function verifyPassword() {
+    async function verifyPassword() {
       const input = document.getElementById('authPasswordInput');
       const errorMsg = document.getElementById('authErrorMsg');
+      const btn = document.getElementById('btnAuthSubmit');
+      const enteredPassword = input.value.trim();
 
-      if (input.value === SYSTEM_PASSWORD) {
-        document.getElementById('page-auth').style.display = 'none';
-        document.getElementById('mainAppContainer').style.display = 'block';
-        document.getElementById('page-dorm-select').classList.add('active');
-      } else {
+      if (!enteredPassword) {
+        errorMsg.textContent = 'กรุณากรอกรหัสผ่าน';
         errorMsg.style.display = 'block';
-        input.value = '';
-        input.focus();
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'กำลังตรวจสอบ...';
+      errorMsg.style.display = 'none';
+
+      try {
+        const res = await fetch(`${API_ENDPOINT}?action=verify`, {
+          headers: { 'x-staff-auth': enteredPassword }
+        });
+
+        if (res.ok) {
+          sessionPassword = enteredPassword;
+          document.getElementById('page-auth').style.display = 'none';
+          document.getElementById('mainAppContainer').style.display = 'block';
+          document.getElementById('page-dorm-select').classList.add('active');
+        } else {
+          errorMsg.textContent = '❌ รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง';
+          errorMsg.style.display = 'block';
+          input.value = '';
+          input.focus();
+        }
+      } catch (err) {
+        errorMsg.textContent = 'เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์';
+        errorMsg.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'เข้าสู่ระบบ';
       }
     }
 
@@ -855,23 +880,23 @@
     }
 
     async function loadActiveStatusData() {
-      // Set indicator while fetching
       document.getElementById('tableBody').innerHTML = `<tr><td colspan="9" style="text-align:center; padding: 24px; color: var(--text-muted);">กำลังดึงข้อมูล...</td></tr>`;
       document.getElementById('statusSummary').textContent = 'กำลังดึงข้อมูล...';
 
       try {
-        if (API_ENDPOINT.includes('YOUR_DEPLOYMENT_ID')) {
-          activeRoomsData = [];
-        } else {
-          const res = await fetch(`${API_ENDPOINT}?dorm=${encodeURIComponent(currentDorm)}`);
-          const fetched = await res.json();
-          activeRoomsData = (fetched || []).map(item => ({ 
-            ...item, 
-            isChecked: false, 
-            newStatus: '', 
-            appointmentDate: item.appointmentDate ? String(item.appointmentDate).trim() : ''
-          }));
-        }
+        const res = await fetch(`${API_ENDPOINT}?dorm=${encodeURIComponent(currentDorm)}`, {
+          headers: { 'x-staff-auth': sessionPassword }
+        });
+
+        if (!res.ok) throw new Error('การยืนยันตัวตนล้มเหลว หรือเซิร์ฟเวอร์มีปัญหา');
+
+        const fetched = await res.json();
+        activeRoomsData = (fetched || []).map(item => ({ 
+          ...item, 
+          isChecked: false, 
+          newStatus: '', 
+          appointmentDate: item.appointmentDate ? String(item.appointmentDate).trim() : ''
+        }));
         applyFilters();
       } catch (err) {
         document.getElementById('tableBody').innerHTML = `<tr><td colspan="9" style="color:red; text-align:center; padding: 24px;">โหลดข้อมูลไม่สำเร็จ: ${err.message}</td></tr>`;
@@ -1211,7 +1236,8 @@
         const response = await fetch(API_ENDPOINT, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+            'Content-Type': 'application/json',
+            'x-staff-auth': sessionPassword
           },
           body: payload
         });
