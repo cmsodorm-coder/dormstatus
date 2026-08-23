@@ -24,6 +24,7 @@
       --radius: 12px;
       --success: #16a34a;
       --success-hover: #15803d;
+      --ease-spring: cubic-bezier(0.2, 0.8, 0.2, 1);
       --font-stack: 'Prompt', 'Sarabun', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Sukhumvit Set', 'Thonburi', 'Leelawadee UI', sans-serif;
     }
 
@@ -53,7 +54,7 @@
 
     .container {
       width: 100%;
-      max-width: 1150px;
+      max-width: 1250px;
       background: var(--card-bg);
       border-radius: var(--radius);
       padding: 32px 28px;
@@ -199,18 +200,12 @@
       cursor: pointer;
       border-bottom: 3px solid transparent;
       margin-bottom: -2px;
+      transition: all 0.2s ease;
     }
 
     .tab-btn.active {
       color: var(--primary);
       border-bottom-color: var(--primary);
-    }
-
-    .subtab-panel {
-      display: none;
-    }
-    .subtab-panel.active {
-      display: block;
     }
 
     .filter-bar {
@@ -269,13 +264,15 @@
     }
 
     .table-responsive {
-      overflow-x: auto;
+      overflow-x: hidden;
       border-radius: 8px;
       border: 1px solid var(--border);
+      position: relative;
     }
 
     table {
       width: 100%;
+      table-layout: fixed;
       border-collapse: collapse;
       font-size: 0.9rem;
       text-align: left;
@@ -285,26 +282,113 @@
       background-color: #f1f5f9;
       color: var(--text-muted);
       font-weight: 600;
-      padding: 12px 14px;
       border-bottom: 1px solid var(--border);
       white-space: nowrap;
+      padding: 0;
     }
 
     td {
-      padding: 12px 14px;
       border-bottom: 1px solid var(--border);
       vertical-align: middle;
+      padding: 0;
     }
 
     tbody tr.selected-row {
       background-color: #f0fdf4;
     }
 
+    .cell-squeeze {
+      padding: 12px 14px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: padding 0.45s var(--ease-spring), max-width 0.45s var(--ease-spring);
+      box-sizing: border-box;
+    }
+
+    .mode-update .cell-squeeze {
+      padding: 12px 8px;
+    }
+
+    .col-w-date     { width: 14%; }
+    .col-w-room     { width: 12%; }
+    .col-w-cat      { width: 22%; }
+    .col-w-detail   { width: 32%; }
+    .col-w-status   { width: 20%; }
+
+    .mode-update .col-w-date     { width: 11%; }
+    .mode-update .col-w-room     { width: 8%; }
+    .mode-update .col-w-cat      { width: 15%; }
+    .mode-update .col-w-detail   { width: 18%; }
+    .mode-update .col-w-status   { width: 14%; }
+
+    .col-edge {
+      border-bottom: 1px solid transparent;
+      transition: border-bottom 0.4s ease;
+    }
+
+    .col-edge-inner {
+      max-width: 0;
+      opacity: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      pointer-events: none;
+      transition: max-width 0.45s var(--ease-spring),
+                  opacity 0.3s ease,
+                  transform 0.45s var(--ease-spring),
+                  padding 0.45s var(--ease-spring);
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    .col-left-edge .col-edge-inner {
+      transform: translateX(-100vw);
+    }
+
+    .col-right-edge .col-edge-inner {
+      transform: translateX(100vw);
+    }
+
+    .mode-update .col-edge {
+      border-bottom: 1px solid var(--border);
+    }
+
+    .mode-update .col-left-edge .col-edge-inner {
+      max-width: 50px;
+      opacity: 1;
+      padding: 12px 10px;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+
+    .mode-update .col-action-status .col-edge-inner {
+      max-width: 190px;
+      opacity: 1;
+      padding: 12px 10px;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+
+    .mode-update .col-action-date .col-edge-inner {
+      max-width: 170px;
+      opacity: 1;
+      padding: 12px 10px;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+
+    .col-w-cb           { width: 0%; transition: width 0.45s var(--ease-spring); }
+    .col-w-action-stat  { width: 0%; transition: width 0.45s var(--ease-spring); }
+    .col-w-action-dt    { width: 0%; transition: width 0.45s var(--ease-spring); }
+
+    .mode-update .col-w-cb          { width: 5%; }
+    .mode-update .col-w-action-stat { width: 17%; }
+    .mode-update .col-w-action-dt   { width: 15%; }
+
     .status-badge {
       display: inline-flex;
-      padding: 4px 10px;
+      padding: 4px 8px;
       border-radius: 9999px;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 600;
       white-space: nowrap;
       border: 1px solid transparent;
@@ -322,15 +406,26 @@
 
     .bulk-bar {
       margin-top: 18px;
-      padding: 16px;
+      padding: 0 16px;
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
       background: #f8fafc;
       border-radius: 8px;
-      border: 1px solid var(--border);
+      border: 1px solid transparent;
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 16px;
       flex-wrap: wrap;
+      transition: all 0.4s var(--ease-spring);
+    }
+
+    #main-table-container.mode-update + .bulk-bar {
+      max-height: 120px;
+      opacity: 1;
+      padding: 16px;
+      border-color: var(--border);
     }
 
     .bulk-action-controls {
@@ -341,10 +436,11 @@
     }
 
     .select-status, .input-date {
-      padding: 8px 12px;
+      width: 100%;
+      padding: 7px 10px;
       border: 1px solid var(--border);
       border-radius: 8px;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       outline: none;
       background: #fff;
       transition: all 0.2s ease;
@@ -424,7 +520,7 @@
       <button class="btn-primary" id="btnContinue" disabled onclick="navigateToDashboard()">ถัดไป</button>
     </div>
 
-    <!-- PAGE 2: DASHBOARD & BULK UPDATE -->
+    <!-- PAGE 2: DASHBOARD WITH SQUEEZE & SLIDE TRANSITIONS -->
     <div id="page-dashboard" class="view-section">
       <div class="page-header">
         <div>
@@ -435,143 +531,102 @@
       </div>
 
       <div class="tabs-nav">
-        <button class="tab-btn active" id="tabBtn1" onclick="switchTab('tab-active-rooms')">Dashboard ห้องพักทั้งหมด (Active Status)</button>
-        <button class="tab-btn" id="tabBtn2" onclick="switchTab('tab-update-status')">อัปเดตสถานะการซ่อม (Bulk Update)</button>
+        <button class="tab-btn active" id="tabBtn1" onclick="switchMode('active')">Dashboard ห้องพักทั้งหมด (Active)</button>
+        <button class="tab-btn" id="tabBtn2" onclick="switchMode('bulk')">อัปเดตสถานะการซ่อม (Bulk Update)</button>
+        <button class="tab-btn" id="tabBtn3" onclick="switchMode('completed')">รายการที่สำเร็จแล้ว (Completed)</button>
       </div>
 
-      <!-- Subtab 1: Active Status Dashboard -->
-      <div id="tab-active-rooms" class="subtab-panel active">
-        <div class="filter-bar">
-          <input type="text" id="searchInput1" class="search-input" placeholder="ค้นหาเลขห้อง หรือปัญหา..." onkeyup="applyDashboardFilters()">
-          
-          <select id="categoryFilter1" class="filter-select" onchange="applyDashboardFilters()">
-            <option value="">หมวดหมู่ปัญหาทั้งหมด</option>
-            <option value="หลอดไฟ">หลอดไฟ</option>
-            <option value="เครื่องทำน้ำอุ่น">เครื่องทำน้ำอุ่น</option>
-            <option value="เครื่องปรับอากาศ">เครื่องปรับอากาศและคอมเพรสเซอร์</option>
-            <option value="ระบบประปา">ระบบประปา / ท่อน้ำ / สายชำระ</option>
-            <option value="มู่ลี่">มู่ลี่</option>
-            <option value="ผนังและโครงสร้าง">ผนังและโครงสร้าง</option>
-            <option value="เฟอร์นิเจอร์">เฟอร์นิเจอร์และกระจก</option>
-            <option value="อื่น">อื่น ๆ</option>
-          </select>
+      <!-- Filter Controls -->
+      <div class="filter-bar">
+        <input type="text" id="searchInput" class="search-input" placeholder="ค้นหาเลขห้อง หรือปัญหา..." onkeyup="applyFilters()">
+        
+        <select id="categoryFilter" class="filter-select" onchange="applyFilters()">
+          <option value="">หมวดหมู่ปัญหาทั้งหมด</option>
+          <option value="หลอดไฟ">หลอดไฟ</option>
+          <option value="เครื่องทำน้ำอุ่น">เครื่องทำน้ำอุ่น</option>
+          <option value="เครื่องปรับอากาศ">เครื่องปรับอากาศและคอมเพรสเซอร์</option>
+          <option value="ระบบประปา">ระบบประปา / ท่อน้ำ / สายชำระ</option>
+          <option value="มู่ลี่">มู่ลี่</option>
+          <option value="ผนังและโครงสร้าง">ผนังและโครงสร้าง</option>
+          <option value="เฟอร์นิเจอร์">เฟอร์นิเจอร์และกระจก</option>
+          <option value="อื่น">อื่น ๆ</option>
+        </select>
 
-          <select id="statusFilter1" class="filter-select" onchange="applyDashboardFilters()">
-            <option value="">สถานะทั้งหมด</option>
-            <option value="ได้รับคำร้องแล้ว">ได้รับคำร้องแล้ว</option>
-            <option value="แจ้งซ่อมในระบบแล้ว">แจ้งซ่อมในระบบแล้ว</option>
-            <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
-            <option value="รอเบิกอะไหล่">รอเบิกอะไหล่</option>
-            <option value="ช่างจะเข้าซ่อมในห้อง">ช่างจะเข้าซ่อมในห้อง</option>
-            <option value="สำเร็จ">สำเร็จ</option>
-            <option value="ไม่รับคำร้อง">ไม่รับคำร้อง</option>
-            <option value="คำร้องไม่ชัดเจน">คำร้องไม่ชัดเจน</option>
-          </select>
+        <select id="statusFilter" class="filter-select" onchange="applyFilters()">
+          <!-- Populated dynamically based on tab -->
+        </select>
 
-          <button class="btn-sort" id="sortBtn1" onclick="toggleDashboardSort()">
-            <span id="sortIcon1">⏱️</span> เรียงตามเวลาแจ้ง: <span id="sortText1">แจ้งนานสุด ➔ ล่าสุด</span>
-          </button>
+        <button class="btn-sort" id="sortBtn" onclick="toggleSort()">
+          <span id="sortIcon">⏱️</span> เรียงตามเวลา: <span id="sortText">นานสุด ➔ ล่าสุด</span>
+        </button>
 
-          <span id="recordCount1" style="font-size: 0.85rem; color: var(--text-muted); margin-left: auto;">กำลังโหลด...</span>
-        </div>
-
-        <div class="table-responsive">
-          <table>
-            <thead>
-              <tr>
-                <th style="min-width: 120px;">วันที่แจ้ง</th>
-                <th>ห้อง</th>
-                <th>หมวดหมู่ / ปัญหา</th>
-                <th>รายละเอียด</th>
-                <th>สถานะล่าสุด</th>
-              </tr>
-            </thead>
-            <tbody id="tableBody1">
-              <tr><td colspan="5" style="text-align:center; padding: 24px; color: var(--text-muted);">กำลังโหลดข้อมูล...</td></tr>
-            </tbody>
-          </table>
-        </div>
+        <span id="statusSummary" style="font-size: 0.85rem; color: var(--text-muted); margin-left: auto;">กำลังโหลด...</span>
       </div>
 
-      <!-- Subtab 2: Bulk Update Status Selection -->
-      <div id="tab-update-status" class="subtab-panel">
-        <div class="filter-bar">
-          <input type="text" id="roomFilterInput" class="search-input" placeholder="พิมพ์เลขห้อง หรือปัญหาเพื่อค้นหา..." onkeyup="applyUpdateFilters()">
-          
-          <select id="categoryFilter2" class="filter-select" onchange="applyUpdateFilters()">
-            <option value="">หมวดหมู่ปัญหาทั้งหมด</option>
-            <option value="หลอดไฟ">หลอดไฟ</option>
-            <option value="เครื่องทำน้ำอุ่น">เครื่องทำน้ำอุ่น</option>
-            <option value="เครื่องปรับอากาศ">เครื่องปรับอากาศและคอมเพรสเซอร์</option>
-            <option value="ระบบประปา">ระบบประปา / ท่อน้ำ / สายชำระ</option>
-            <option value="มู่ลี่">มู่ลี่</option>
-            <option value="ผนังและโครงสร้าง">ผนังและโครงสร้าง</option>
-            <option value="เฟอร์นิเจอร์">เฟอร์นิเจอร์และกระจก</option>
-            <option value="อื่น">อื่น ๆ</option>
-          </select>
-
-          <select id="statusFilter2" class="filter-select" onchange="applyUpdateFilters()">
-            <option value="">สถานะปัจจุบันทั้งหมด</option>
-            <option value="ได้รับคำร้องแล้ว">ได้รับคำร้องแล้ว</option>
-            <option value="แจ้งซ่อมในระบบแล้ว">แจ้งซ่อมในระบบแล้ว</option>
-            <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
-            <option value="รอเบิกอะไหล่">รอเบิกอะไหล่</option>
-            <option value="ช่างจะเข้าซ่อมในห้อง">ช่างจะเข้าซ่อมในห้อง</option>
-            <option value="สำเร็จ">สำเร็จ</option>
-            <option value="ไม่รับคำร้อง">ไม่รับคำร้อง</option>
-            <option value="คำร้องไม่ชัดเจน">คำร้องไม่ชัดเจน</option>
-          </select>
-
-          <button class="btn-sort" id="sortBtn2" onclick="toggleUpdateSort()">
-            <span id="sortIcon2">⏱️</span> เรียงตามเวลาแจ้ง: <span id="sortText2">แจ้งนานสุด ➔ ล่าสุด</span>
-          </button>
-
-          <span id="selectionSummary" style="font-size: 0.85rem; font-weight: 600; color: var(--primary); margin-left: auto;">เลือกแล้ว 0 รายการ</span>
-        </div>
-
-        <div class="table-responsive">
-          <table>
-            <thead>
-              <tr>
-                <th style="width: 44px; text-align: center;">
+      <!-- Table Structure with Dynamic Col Widths and Smooth Squeeze -->
+      <div class="table-responsive" id="main-table-container">
+        <table>
+          <colgroup>
+            <col class="col-w-cb">
+            <col class="col-w-date">
+            <col class="col-w-room">
+            <col class="col-w-cat">
+            <col class="col-w-detail">
+            <col class="col-w-status">
+            <col class="col-w-action-stat">
+            <col class="col-w-action-dt">
+          </colgroup>
+          <thead>
+            <tr>
+              <!-- Left Edge Slide: Checkbox -->
+              <th class="col-edge col-left-edge">
+                <div class="col-edge-inner" style="text-align: center;">
                   <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)">
-                </th>
-                <th style="min-width: 120px;">วันที่แจ้ง</th>
-                <th>ห้อง</th>
-                <th>หมวดหมู่ / ปัญหา</th>
-                <th>รายละเอียด</th>
-                <th>สถานะปัจจุบัน</th>
-                <th style="min-width: 170px;">เลือกสถานะใหม่ (แต่ละแถว)</th>
-                <th style="min-width: 150px;">วันที่ช่างจะเข้าห้อง <span style="color: #ef4444;">*</span></th>
-              </tr>
-            </thead>
-            <tbody id="updateTableBody">
-              <tr><td colspan="8" style="text-align:center; padding: 24px; color: var(--text-muted);">กำลังโหลดรายการ...</td></tr>
-            </tbody>
-          </table>
+                </div>
+              </th>
+              
+              <!-- Squeezed Central Columns -->
+              <th><div class="cell-squeeze" id="dateHeaderTitle">วันที่อัปเดต</div></th>
+              <th><div class="cell-squeeze">ห้อง</div></th>
+              <th><div class="cell-squeeze">หมวดหมู่ / ปัญหา</div></th>
+              <th><div class="cell-squeeze">รายละเอียด</div></th>
+              <th><div class="cell-squeeze">สถานะ</div></th>
+
+              <!-- Right Edge Slide: Actions -->
+              <th class="col-edge col-right-edge col-action-status">
+                <div class="col-edge-inner">เลือกสถานะใหม่</div>
+              </th>
+              <th class="col-edge col-right-edge col-action-date">
+                <div class="col-edge-inner">วันที่ช่างเข้าห้อง <span style="color: #ef4444;">*</span></div>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr><td colspan="8" style="text-align:center; padding: 24px; color: var(--text-muted);">กำลังโหลดข้อมูล...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Bulk Action Bar -->
+      <div class="bulk-bar" id="bulkBar">
+        <div class="bulk-action-controls">
+          <span style="font-size: 0.9rem; font-weight: 600;">เปลี่ยนสถานะทุกแถวที่เลือกพร้อมกัน:</span>
+          <select id="bulkStatusSelect" class="select-status" style="width: auto;" onchange="applyStatusToSelected(this.value)">
+            <option value="">-- เลือกสถานะส่วนกลาง --</option>
+            <option value="แจ้งซ่อมในระบบแล้ว">แจ้งซ่อมในระบบแล้ว</option>
+            <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
+            <option value="รอเบิกอะไหล่">รอเบิกอะไหล่</option>
+            <option value="ช่างจะเข้าซ่อมในห้อง">ช่างจะเข้าซ่อมในห้อง</option>
+            <option value="สำเร็จ">สำเร็จ</option>
+            <option value="ไม่รับคำร้อง">ไม่รับคำร้อง</option>
+            <option value="คำร้องไม่ชัดเจน">คำร้องไม่ชัดเจน</option>
+          </select>
+          <input type="date" id="bulkDateInput" class="input-date" style="display: none; width: auto;" title="ระบุวันที่ช่างจะเข้าห้องพร้อมกัน" onchange="applyDateToSelected(this.value)">
         </div>
 
-        <!-- Bulk Action Controls -->
-        <div class="bulk-bar">
-          <div class="bulk-action-controls">
-            <span style="font-size: 0.9rem; font-weight: 600;">เปลี่ยนสถานะทุกแถวที่เลือกพร้อมกัน:</span>
-            <select id="bulkStatusSelect" class="select-status" onchange="applyStatusToSelected(this.value)">
-              <option value="">-- เลือกสถานะส่วนกลาง --</option>
-              <option value="แจ้งซ่อมในระบบแล้ว">แจ้งซ่อมในระบบแล้ว</option>
-              <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
-              <option value="รอเบิกอะไหล่">รอเบิกอะไหล่</option>
-              <option value="ช่างจะเข้าซ่อมในห้อง">ช่างจะเข้าซ่อมในห้อง</option>
-              <option value="สำเร็จ">สำเร็จ</option>
-              <option value="ไม่รับคำร้อง">ไม่รับคำร้อง</option>
-              <option value="คำร้องไม่ชัดเจน">คำร้องไม่ชัดเจน</option>
-            </select>
-            <input type="date" id="bulkDateInput" class="input-date" style="display: none;" title="ระบุวันที่ช่างจะเข้าห้องพร้อมกัน" onchange="applyDateToSelected(this.value)">
-          </div>
-
-          <button id="btnSubmitBulk" class="btn-bulk-update" disabled onclick="submitBulkStatusUpdates()">
-            บันทึกการอัปเดตสถานะ
-          </button>
-        </div>
+        <button id="btnSubmitBulk" class="btn-bulk-update" disabled onclick="submitBulkStatusUpdates()">
+          บันทึกการอัปเดตสถานะ
+        </button>
       </div>
     </div>
   </div>
@@ -579,9 +634,8 @@
   <script>
     let currentDorm = "";
     let activeRoomsData = [];
-
-    let sortOrderTab1 = 'asc';
-    let sortOrderTab2 = 'asc';
+    let currentMode = "active";
+    let currentSortOrder = 'asc';
 
     const API_ENDPOINT = "https://script.google.com/macros/s/AKfycbxPW-8OMeJjTeuFnZa6_yIKG6GnMqlxmYnU6wnCif_fbpCAfRewV63c32G0U3jGyP-_JA/exec";
 
@@ -601,7 +655,17 @@
 
     function formatDaysAgo(timestamp) {
       if (!timestamp) return '-';
-      const ticketDate = new Date(timestamp);
+      const clean = String(timestamp).replace(/^SENT\s*\(\s*/i, "").replace(/\)$/, "").trim();
+      let parts = clean.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+      let ticketDate;
+      if (parts) {
+        let yr = parseInt(parts[3], 10);
+        if (yr > 2400) yr -= 543;
+        ticketDate = new Date(yr, parseInt(parts[2], 10) - 1, parseInt(parts[1], 10));
+      } else {
+        ticketDate = new Date(clean);
+      }
+
       if (isNaN(ticketDate.getTime())) return String(timestamp);
 
       const d = ticketDate.getDate();
@@ -616,7 +680,7 @@
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
       let agoStr = diffDays <= 0 ? 'วันนี้' : `${diffDays} วันที่แล้ว`;
-      return `<div style="white-space: nowrap; font-weight: 500;">${dateStr}</div><div style="white-space: nowrap; font-size: 0.78rem; color: #94a3b8; margin-top: 2px;">${agoStr}</div>`;
+      return `<div style="white-space: nowrap; font-weight: 500;">${dateStr}</div><div style="white-space: nowrap; font-size: 0.75rem; color: #94a3b8; margin-top: 2px;">${agoStr}</div>`;
     }
 
     function getBadgeClass(status) {
@@ -646,6 +710,7 @@
       document.getElementById('page-dorm-select').classList.remove('active');
       document.getElementById('page-dashboard').classList.add('active');
       document.getElementById('selectedDormBadge').textContent = currentDorm;
+      switchMode('active');
       loadActiveStatusData();
     }
 
@@ -654,17 +719,48 @@
       document.getElementById('page-dorm-select').classList.add('active');
     }
 
-    function switchTab(tabId) {
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.subtab-panel').forEach(panel => panel.classList.remove('active'));
-
-      if (tabId === 'tab-active-rooms') {
-        document.getElementById('tabBtn1').classList.add('active');
-        document.getElementById('tab-active-rooms').classList.add('active');
+    function updateStatusFilterDropdown() {
+      const select = document.getElementById('statusFilter');
+      if (currentMode === 'completed') {
+        select.innerHTML = `
+          <option value="">สถานะทั้งหมด</option>
+          <option value="สำเร็จ">สำเร็จ</option>
+        `;
       } else {
-        document.getElementById('tabBtn2').classList.add('active');
-        document.getElementById('tab-update-status').classList.add('active');
+        select.innerHTML = `
+          <option value="">สถานะปัจจุบันทั้งหมด</option>
+          <option value="ได้รับคำร้องแล้ว">ได้รับคำร้องแล้ว</option>
+          <option value="แจ้งซ่อมในระบบแล้ว">แจ้งซ่อมในระบบแล้ว</option>
+          <option value="กำลังดำเนินการ">กำลังดำเนินการ</option>
+          <option value="รอเบิกอะไหล่">รอเบิกอะไหล่</option>
+          <option value="ช่างจะเข้าซ่อมในห้อง">ช่างจะเข้าซ่อมในห้อง</option>
+          <option value="คำร้องไม่ชัดเจน">คำร้องไม่ชัดเจน</option>
+        `;
       }
+    }
+
+    function switchMode(mode) {
+      currentMode = mode;
+      const tab1 = document.getElementById('tabBtn1');
+      const tab2 = document.getElementById('tabBtn2');
+      const tab3 = document.getElementById('tabBtn3');
+      const container = document.getElementById('main-table-container');
+
+      [tab1, tab2, tab3].forEach(b => b.classList.remove('active'));
+
+      if (mode === 'active') {
+        tab1.classList.add('active');
+        container.classList.remove('mode-update');
+      } else if (mode === 'bulk') {
+        tab2.classList.add('active');
+        container.classList.add('mode-update');
+      } else if (mode === 'completed') {
+        tab3.classList.add('active');
+        container.classList.remove('mode-update');
+      }
+
+      updateStatusFilterDropdown();
+      applyFilters();
     }
 
     async function loadActiveStatusData() {
@@ -677,131 +773,119 @@
           activeRoomsData = (fetched || []).map(item => ({ 
             ...item, 
             isChecked: false, 
-            newStatus: '',
+            newStatus: '', 
             appointmentDate: item.appointmentDate ? String(item.appointmentDate).trim() : ''
           }));
         }
-
-        applyDashboardFilters();
-        applyUpdateFilters();
+        applyFilters();
       } catch (err) {
-        document.getElementById('tableBody1').innerHTML = `<tr><td colspan="5" style="color:red; text-align:center;">โหลดข้อมูลไม่สำเร็จ: ${err.message}</td></tr>`;
+        document.getElementById('tableBody').innerHTML = `<tr><td colspan="8" style="color:red; text-align:center; padding: 24px;">โหลดข้อมูลไม่สำเร็จ: ${err.message}</td></tr>`;
       }
+    }
+
+    function parseToMillis(val) {
+      if (!val) return 0;
+      let s = String(val).replace(/^SENT\s*\(\s*/i, "").replace(/\)$/, "").trim();
+      if (s.includes("|")) s = s.split("|")[0].trim();
+
+      const iso = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[T\s](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+      if (iso) {
+        let y = parseInt(iso[1], 10);
+        if (y > 2400) y -= 543;
+        return new Date(y, parseInt(iso[2], 10) - 1, parseInt(iso[3], 10), parseInt(iso[4] || 0), parseInt(iso[5] || 0), parseInt(iso[6] || 0)).getTime();
+      }
+
+      const slash = s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})(?:[T\s](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+      if (slash) {
+        const p1 = parseInt(slash[1], 10);
+        const p2 = parseInt(slash[2], 10);
+        let yr = parseInt(slash[3], 10);
+        if (yr < 100) yr += 2000;
+        if (yr > 2400) yr -= 543;
+        let d = p1, m = p2 - 1;
+        if (p1 > 12 && p2 <= 12) { d = p1; m = p2 - 1; }
+        else if (p2 > 12 && p1 <= 12) { d = p2; m = p1 - 1; }
+        return new Date(yr, m, d, parseInt(slash[4] || 0), parseInt(slash[5] || 0), parseInt(slash[6] || 0)).getTime();
+      }
+
+      const d = new Date(s);
+      return isNaN(d.getTime()) ? 0 : d.getTime();
     }
 
     function compareTimestamps(a, b, order = 'asc') {
-      const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
-      const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+      const timeA = parseToMillis(a.timestamp);
+      const timeB = parseToMillis(b.timestamp);
 
-      if (!isNaN(timeA) && !isNaN(timeB) && timeA !== 0 && timeB !== 0) {
+      if (timeA !== 0 && timeB !== 0) {
         return order === 'asc' ? timeA - timeB : timeB - timeA;
       }
-
-      const strA = String(a.timestamp || '');
-      const strB = String(b.timestamp || '');
       return order === 'asc' 
-        ? strA.localeCompare(strB, undefined, { numeric: true, sensitivity: 'base' })
-        : strB.localeCompare(strA, undefined, { numeric: true, sensitivity: 'base' });
+        ? String(a.timestamp || '').localeCompare(String(b.timestamp || ''))
+        : String(b.timestamp || '').localeCompare(String(a.timestamp || ''));
     }
 
-    function toggleDashboardSort() {
-      sortOrderTab1 = sortOrderTab1 === 'asc' ? 'desc' : 'asc';
-      document.getElementById('sortText1').textContent = sortOrderTab1 === 'asc' ? 'แจ้งนานสุด ➔ ล่าสุด' : 'ล่าสุด ➔ แจ้งนานสุด';
-      applyDashboardFilters();
+    function toggleSort() {
+      currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+      document.getElementById('sortText').textContent = currentSortOrder === 'asc' ? 'นานสุด ➔ ล่าสุด' : 'ล่าสุด ➔ นานสุด';
+      applyFilters();
     }
 
-    function applyDashboardFilters() {
-      const search = (document.getElementById('searchInput1').value || '').toLowerCase().trim();
-      const cat = (document.getElementById('categoryFilter1').value || '').toLowerCase().trim();
-      const stat = (document.getElementById('statusFilter1').value || '').toLowerCase().trim();
+    function applyFilters() {
+      const search = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+      const cat = (document.getElementById('categoryFilter').value || '').toLowerCase().trim();
+      const stat = (document.getElementById('statusFilter').value || '').toLowerCase().trim();
 
       let filtered = activeRoomsData.filter(item => {
-        const textMatch = !search || 
-          (item.roomNumber || '').toLowerCase().includes(search) || 
-          (item.category || '').toLowerCase().includes(search) || 
-          (item.detail || '').toLowerCase().includes(search);
-        
-        const catMatch = !cat || (item.category || '').toLowerCase().includes(cat);
-        const statMatch = !stat || (item.activeStatus || '').toLowerCase().includes(stat);
+        const currentStat = String(item.activeStatus || "").trim();
 
-        return textMatch && catMatch && statMatch;
-      });
-
-      filtered.sort((a, b) => compareTimestamps(a, b, sortOrderTab1));
-      renderDashboardTable(filtered);
-    }
-
-    function renderDashboardTable(dataList) {
-      const tbody = document.getElementById('tableBody1');
-      const count = document.getElementById('recordCount1');
-
-      if (!dataList || dataList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:24px;">ไม่พบรายการที่ตรงกับเงื่อนไข</td></tr>';
-        count.textContent = 'พบ 0 รายการ';
-        return;
-      }
-
-      count.textContent = `พบ ${dataList.length} รายการ`;
-      tbody.innerHTML = dataList.map(item => {
-        let apptBadge = '';
-        if (item.appointmentDate) {
-          apptBadge = `<div style="font-size: 0.75rem; color: #9a3412; background: #ffedd5; padding: 2px 8px; border-radius: 4px; margin-top: 4px; display: inline-block; font-weight: 600; border: 1px solid #fed7aa;">📅 ช่างเข้า: ${formatThaiDisplayDate(item.appointmentDate)}</div>`;
+        // Mode-specific filtering:
+        if (currentMode === 'active' || currentMode === 'bulk') {
+          // Exclude completed and rejected
+          if (currentStat.includes("สำเร็จ") || currentStat.includes("ไม่รับคำร้อง")) {
+            return false;
+          }
+        } else if (currentMode === 'completed') {
+          // Show only completed
+          if (!currentStat.includes("สำเร็จ")) {
+            return false;
+          }
         }
 
-        return `
-        <tr>
-          <td><span style="font-size: 0.85rem; color: var(--text);">${formatDaysAgo(item.timestamp)}</span></td>
-          <td><strong>${item.roomNumber || '-'}</strong></td>
-          <td>${item.category || '-'}</td>
-          <td>${item.detail || '-'}</td>
-          <td>
-            <span class="status-badge ${getBadgeClass(item.activeStatus)}">
-              ${item.activeStatus || 'ไม่มีสถานะ'}
-            </span>
-            ${apptBadge}
-          </td>
-        </tr>
-      `}).join('');
-    }
-
-    function toggleUpdateSort() {
-      sortOrderTab2 = sortOrderTab2 === 'asc' ? 'desc' : 'asc';
-      document.getElementById('sortText2').textContent = sortOrderTab2 === 'asc' ? 'แจ้งนานสุด ➔ ล่าสุด' : 'ล่าสุด ➔ แจ้งนานสุด';
-      applyUpdateFilters();
-    }
-
-    function applyUpdateFilters() {
-      const search = (document.getElementById('roomFilterInput').value || '').toLowerCase().trim();
-      const cat = (document.getElementById('categoryFilter2').value || '').toLowerCase().trim();
-      const stat = (document.getElementById('statusFilter2').value || '').toLowerCase().trim();
-
-      let filtered = activeRoomsData.filter(item => {
         const textMatch = !search || 
           (item.roomNumber || '').toLowerCase().includes(search) || 
           (item.category || '').toLowerCase().includes(search) || 
           (item.detail || '').toLowerCase().includes(search);
         
         const catMatch = !cat || (item.category || '').toLowerCase().includes(cat);
-        const statMatch = !stat || (item.activeStatus || '').toLowerCase().includes(stat);
+        const statMatch = !stat || currentStat.toLowerCase().includes(stat);
 
         return textMatch && catMatch && statMatch;
       });
 
       filtered.sort((a, b) => {
-        if (a.isChecked === b.isChecked) {
-          return compareTimestamps(a, b, sortOrderTab2);
+        if (currentMode === 'bulk' && a.isChecked !== b.isChecked) {
+          return a.isChecked ? -1 : 1;
         }
-        return a.isChecked ? -1 : 1;
+        return compareTimestamps(a, b, currentSortOrder);
       });
 
-      renderUpdateTable(filtered);
+      renderTable(filtered);
     }
 
-    function renderUpdateTable(dataList) {
-      const tbody = document.getElementById('updateTableBody');
+    function renderTable(dataList) {
+      const tbody = document.getElementById('tableBody');
+      const summary = document.getElementById('statusSummary');
+
+      if (currentMode === 'bulk') {
+        const checkedCount = activeRoomsData.filter(i => i.isChecked).length;
+        summary.textContent = `เลือกแล้ว ${checkedCount} รายการ`;
+      } else {
+        summary.textContent = `พบ ${dataList.length} รายการ`;
+      }
 
       if (!dataList || dataList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:24px;">ไม่พบรายการที่ตรงกับเงื่อนไข</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:24px; color: var(--text-muted);">ไม่พบรายการที่ตรงกับเงื่อนไข</td></tr>';
+        updateSelectionUI();
         return;
       }
 
@@ -810,37 +894,52 @@
         const isMissingDate = isRepairActive && !item.appointmentDate;
         
         let apptBadge = '';
-        if (item.appointmentDate && item.newStatus !== 'ช่างจะเข้าซ่อมในห้อง') {
-          apptBadge = `<div style="font-size: 0.75rem; color: #b45309; font-weight: 600; margin-top: 3px;">📅 นัดหมายเดิม: ${formatThaiDisplayDate(item.appointmentDate)}</div>`;
+        if (item.appointmentDate) {
+          apptBadge = `<div style="font-size: 0.72rem; color: #9a3412; background: #ffedd5; padding: 2px 6px; border-radius: 4px; margin-top: 4px; display: inline-block; font-weight: 600; border: 1px solid #fed7aa; white-space: nowrap;">📅 นัดล่าสุด: ${formatThaiDisplayDate(item.appointmentDate)}</div>`;
         }
 
         return `
-        <tr id="row-${item.id}" class="${item.isChecked ? 'selected-row' : ''}">
-          <td style="text-align: center;">
-            <input type="checkbox" class="row-checkbox" data-id="${item.id}" ${item.isChecked ? 'checked' : ''} onchange="handleRowCheckboxChange(this)">
+        <tr id="row-${item.id}" class="${item.isChecked && currentMode === 'bulk' ? 'selected-row' : ''}">
+          <!-- Left Edge Slide-In Checkbox -->
+          <td class="col-edge col-left-edge">
+            <div class="col-edge-inner" style="text-align: center;">
+              <input type="checkbox" class="row-checkbox" data-id="${item.id}" ${item.isChecked ? 'checked' : ''} onchange="handleRowCheckboxChange(this)">
+            </div>
           </td>
-          <td><span style="font-size: 0.85rem; color: var(--text);">${formatDaysAgo(item.timestamp)}</span></td>
-          <td><strong>${item.roomNumber || '-'}</strong></td>
-          <td>${item.category || '-'}</td>
-          <td>${item.detail || '-'}</td>
+
+          <!-- Squeezed Central Columns -->
+          <td><div class="cell-squeeze"><span style="font-size: 0.85rem; color: var(--text);">${formatDaysAgo(item.timestamp)}</span></div></td>
+          <td><div class="cell-squeeze"><strong>${item.roomNumber || '-'}</strong></div></td>
+          <td><div class="cell-squeeze">${item.category || '-'}</div></td>
+          <td><div class="cell-squeeze" title="${item.detail || ''}">${item.detail || '-'}</div></td>
           <td>
-            <span class="status-badge ${getBadgeClass(item.activeStatus)}">${item.activeStatus || '-'}</span>
-            ${apptBadge}
+            <div class="cell-squeeze">
+              <span class="status-badge ${getBadgeClass(item.activeStatus)}">${item.activeStatus || '-'}</span>
+              ${apptBadge}
+            </div>
           </td>
-          <td>
-            <select class="select-status row-status-select" data-id="${item.id}" ${!item.isChecked ? 'disabled' : ''} onchange="handleRowStatusChange('${item.id}', this.value)">
-              <option value="">-- เลือกสถานะใหม่ --</option>
-              <option value="แจ้งซ่อมในระบบแล้ว" ${item.newStatus === 'แจ้งซ่อมในระบบแล้ว' ? 'selected' : ''}>แจ้งซ่อมในระบบแล้ว</option>
-              <option value="กำลังดำเนินการ" ${item.newStatus === 'กำลังดำเนินการ' ? 'selected' : ''}>กำลังดำเนินการ</option>
-              <option value="รอเบิกอะไหล่" ${item.newStatus === 'รอเบิกอะไหล่' ? 'selected' : ''}>รอเบิกอะไหล่</option>
-              <option value="ช่างจะเข้าซ่อมในห้อง" ${item.newStatus === 'ช่างจะเข้าซ่อมในห้อง' ? 'selected' : ''}>ช่างจะเข้าซ่อมในห้อง</option>
-              <option value="สำเร็จ" ${item.newStatus === 'สำเร็จ' ? 'selected' : ''}>สำเร็จ</option>
-              <option value="ไม่รับคำร้อง" ${item.newStatus === 'ไม่รับคำร้อง' ? 'selected' : ''}>ไม่รับคำร้อง</option>
-              <option value="คำร้องไม่ชัดเจน" ${item.newStatus === 'คำร้องไม่ชัดเจน' ? 'selected' : ''}>คำร้องไม่ชัดเจน</option>
-            </select>
+
+          <!-- Right Edge Slide-In Status -->
+          <td class="col-edge col-right-edge col-action-status">
+            <div class="col-edge-inner">
+              <select class="select-status row-status-select" data-id="${item.id}" ${!item.isChecked ? 'disabled' : ''} onchange="handleRowStatusChange('${item.id}', this.value)">
+                <option value="">-- เลือกสถานะใหม่ --</option>
+                <option value="แจ้งซ่อมในระบบแล้ว" ${item.newStatus === 'แจ้งซ่อมในระบบแล้ว' ? 'selected' : ''}>แจ้งซ่อมในระบบแล้ว</option>
+                <option value="กำลังดำเนินการ" ${item.newStatus === 'กำลังดำเนินการ' ? 'selected' : ''}>กำลังดำเนินการ</option>
+                <option value="รอเบิกอะไหล่" ${item.newStatus === 'รอเบิกอะไหล่' ? 'selected' : ''}>รอเบิกอะไหล่</option>
+                <option value="ช่างจะเข้าซ่อมในห้อง" ${item.newStatus === 'ช่างจะเข้าซ่อมในห้อง' ? 'selected' : ''}>ช่างจะเข้าซ่อมในห้อง</option>
+                <option value="สำเร็จ" ${item.newStatus === 'สำเร็จ' ? 'selected' : ''}>สำเร็จ</option>
+                <option value="ไม่รับคำร้อง" ${item.newStatus === 'ไม่รับคำร้อง' ? 'selected' : ''}>ไม่รับคำร้อง</option>
+                <option value="คำร้องไม่ชัดเจน" ${item.newStatus === 'คำร้องไม่ชัดเจน' ? 'selected' : ''}>คำร้องไม่ชัดเจน</option>
+              </select>
+            </div>
           </td>
-          <td>
-            <input type="date" id="date-input-${item.id}" class="input-date row-date-input ${isMissingDate ? 'input-error' : ''}" data-id="${item.id}" value="${item.appointmentDate || ''}" ${!isRepairActive ? 'disabled' : ''} onchange="handleRowDateChange('${item.id}', this.value)">
+
+          <!-- Right Edge Slide-In Date -->
+          <td class="col-edge col-right-edge col-action-date">
+            <div class="col-edge-inner">
+              <input type="date" id="date-input-${item.id}" class="input-date row-date-input ${isMissingDate ? 'input-error' : ''}" data-id="${item.id}" value="${item.appointmentDate || ''}" ${!isRepairActive ? 'disabled' : ''} onchange="handleRowDateChange('${item.id}', this.value)">
+            </div>
           </td>
         </tr>
       `}).join('');
@@ -858,7 +957,7 @@
           target.newStatus = '';
         }
       }
-      applyUpdateFilters();
+      applyFilters();
     }
 
     function handleRowStatusChange(id, value) {
@@ -869,7 +968,7 @@
           target.isChecked = true;
         }
       }
-      applyUpdateFilters();
+      applyFilters();
       
       if (value === 'ช่างจะเข้าซ่อมในห้อง' && !target.appointmentDate) {
         setTimeout(() => {
@@ -895,7 +994,7 @@
     }
 
     function toggleSelectAll(masterCb) {
-      const visibleCheckboxes = document.querySelectorAll('#updateTableBody .row-checkbox');
+      const visibleCheckboxes = document.querySelectorAll('#tableBody .row-checkbox');
       const visibleIds = Array.from(visibleCheckboxes).map(cb => String(cb.dataset.id));
 
       activeRoomsData.forEach(item => {
@@ -906,7 +1005,7 @@
           }
         }
       });
-      applyUpdateFilters();
+      applyFilters();
     }
 
     function applyStatusToSelected(statusVal) {
@@ -925,7 +1024,7 @@
           item.newStatus = statusVal;
         }
       });
-      applyUpdateFilters();
+      applyFilters();
     }
 
     function applyDateToSelected(dateVal) {
@@ -934,18 +1033,17 @@
           item.appointmentDate = dateVal;
         }
       });
-      applyUpdateFilters();
+      applyFilters();
     }
 
     function updateSelectionUI() {
       const checkedCount = activeRoomsData.filter(i => i.isChecked).length;
-      document.getElementById('selectionSummary').textContent = `เลือกแล้ว ${checkedCount} รายการ`;
       document.getElementById('btnSubmitBulk').disabled = checkedCount === 0;
       
       const selectAllCb = document.getElementById('selectAllCheckbox');
       if (selectAllCb) {
-        const visibleCheckboxes = document.querySelectorAll('#updateTableBody .row-checkbox');
-        const checkedVisible = document.querySelectorAll('#updateTableBody .row-checkbox:checked');
+        const visibleCheckboxes = document.querySelectorAll('#tableBody .row-checkbox');
+        const checkedVisible = document.querySelectorAll('#tableBody .row-checkbox:checked');
         selectAllCb.checked = visibleCheckboxes.length > 0 && checkedVisible.length === visibleCheckboxes.length;
       }
     }
@@ -958,7 +1056,6 @@
         return;
       }
 
-      // บังคับตรวจสอบ: ต้องมีวันที่สำหรับทุกห้องที่เลือก "ช่างจะเข้าซ่อมในห้อง"
       const missingDateItem = checkedItems.find(item => item.newStatus === 'ช่างจะเข้าซ่อมในห้อง' && !item.appointmentDate);
       if (missingDateItem) {
         alert(`❌ ไม่สามารถบันทึกได้:\nกรุณาระบุ "วันที่ช่างจะเข้าห้อง" สำหรับห้อง ${missingDateItem.roomNumber || '-'}`);
@@ -973,7 +1070,7 @@
 
       const updates = checkedItems.map(item => ({ 
         id: item.id, 
-        newStatus: item.newStatus,
+        newStatus: item.newStatus, 
         appointmentDate: item.newStatus === 'ช่างจะเข้าซ่อมในห้อง' ? item.appointmentDate : null
       }));
 
