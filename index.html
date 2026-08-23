@@ -309,17 +309,20 @@
       padding: 12px 8px;
     }
 
-    .col-w-date     { width: 14%; }
-    .col-w-room     { width: 12%; }
-    .col-w-cat      { width: 22%; }
-    .col-w-detail   { width: 32%; }
-    .col-w-status   { width: 20%; }
+    /* Updated Widths to Include Image Column */
+    .col-w-date     { width: 12%; }
+    .col-w-room     { width: 10%; }
+    .col-w-cat      { width: 18%; }
+    .col-w-detail   { width: 28%; }
+    .col-w-image    { width: 10%; }
+    .col-w-status   { width: 22%; }
 
-    .mode-update .col-w-date     { width: 11%; }
+    .mode-update .col-w-date     { width: 10%; }
     .mode-update .col-w-room     { width: 8%; }
-    .mode-update .col-w-cat      { width: 15%; }
-    .mode-update .col-w-detail   { width: 18%; }
-    .mode-update .col-w-status   { width: 14%; }
+    .mode-update .col-w-cat      { width: 13%; }
+    .mode-update .col-w-detail   { width: 14%; }
+    .mode-update .col-w-image    { width: 6%; }
+    .mode-update .col-w-status   { width: 12%; }
 
     .col-edge {
       border-bottom: 1px solid transparent;
@@ -392,6 +395,26 @@
       font-weight: 600;
       white-space: nowrap;
       border: 1px solid transparent;
+    }
+
+    .img-badge {
+      display: inline-flex; 
+      align-items: center; 
+      gap: 4px; 
+      background: #f1f5f9; 
+      color: var(--primary); 
+      padding: 4px 8px; 
+      border-radius: 6px; 
+      text-decoration: none; 
+      font-size: 0.8rem; 
+      font-weight: 500; 
+      border: 1px solid var(--border); 
+      transition: all 0.2s ease;
+    }
+    
+    .img-badge:hover {
+      background: #e2e8f0;
+      border-color: #cbd5e1;
     }
 
     .status-received      { background-color: #f1f5f9; color: #475569; border-color: #e2e8f0; }
@@ -572,6 +595,7 @@
             <col class="col-w-room">
             <col class="col-w-cat">
             <col class="col-w-detail">
+            <col class="col-w-image">
             <col class="col-w-status">
             <col class="col-w-action-stat">
             <col class="col-w-action-dt">
@@ -590,6 +614,7 @@
               <th><div class="cell-squeeze">ห้อง</div></th>
               <th><div class="cell-squeeze">หมวดหมู่ / ปัญหา</div></th>
               <th><div class="cell-squeeze">รายละเอียด</div></th>
+              <th><div class="cell-squeeze">รูปภาพ</div></th>
               <th><div class="cell-squeeze">สถานะ</div></th>
 
               <!-- Right Edge Slide: Actions -->
@@ -602,7 +627,7 @@
             </tr>
           </thead>
           <tbody id="tableBody">
-            <tr><td colspan="8" style="text-align:center; padding: 24px; color: var(--text-muted);">กำลังโหลดข้อมูล...</td></tr>
+            <tr><td colspan="9" style="text-align:center; padding: 24px; color: var(--text-muted);">กำลังโหลดข้อมูล...</td></tr>
           </tbody>
         </table>
       </div>
@@ -779,7 +804,7 @@
         }
         applyFilters();
       } catch (err) {
-        document.getElementById('tableBody').innerHTML = `<tr><td colspan="8" style="color:red; text-align:center; padding: 24px;">โหลดข้อมูลไม่สำเร็จ: ${err.message}</td></tr>`;
+        document.getElementById('tableBody').innerHTML = `<tr><td colspan="9" style="color:red; text-align:center; padding: 24px;">โหลดข้อมูลไม่สำเร็จ: ${err.message}</td></tr>`;
       }
     }
 
@@ -828,6 +853,29 @@
       currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
       document.getElementById('sortText').textContent = currentSortOrder === 'asc' ? 'นานสุด ➔ ล่าสุด' : 'ล่าสุด ➔ นานสุด';
       applyFilters();
+    }
+
+    // Identifies and extracts the first available valid image URL dynamically
+    function renderImageCell(item) {
+      let imgUrl = item.image || item.imageUrl || item['รูปภาพประกอบ'];
+      
+      if (!imgUrl) {
+        for (const key in item) {
+          if (key.includes('ภาพ') || key.includes('รูป') || key.toLowerCase().includes('image')) {
+            if (item[key] && String(item[key]).startsWith('http')) {
+              imgUrl = item[key];
+              break;
+            }
+          }
+        }
+      }
+
+      if (!imgUrl || String(imgUrl).trim() === '') {
+        return '<span style="color: var(--text-muted); font-size: 0.85rem;">-</span>';
+      }
+
+      const firstUrl = String(imgUrl).split(',')[0].trim();
+      return `<a href="${firstUrl}" target="_blank" class="img-badge"><span style="font-size: 0.9rem;">🖼️</span> ดูรูป</a>`;
     }
 
     function applyFilters() {
@@ -884,7 +932,7 @@
       }
 
       if (!dataList || dataList.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:24px; color: var(--text-muted);">ไม่พบรายการที่ตรงกับเงื่อนไข</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding:24px; color: var(--text-muted);">ไม่พบรายการที่ตรงกับเงื่อนไข</td></tr>';
         updateSelectionUI();
         return;
       }
@@ -912,6 +960,7 @@
           <td><div class="cell-squeeze"><strong>${item.roomNumber || '-'}</strong></div></td>
           <td><div class="cell-squeeze">${item.category || '-'}</div></td>
           <td><div class="cell-squeeze" title="${item.detail || ''}">${item.detail || '-'}</div></td>
+          <td><div class="cell-squeeze">${renderImageCell(item)}</div></td>
           <td>
             <div class="cell-squeeze">
               <span class="status-badge ${getBadgeClass(item.activeStatus)}">${item.activeStatus || '-'}</span>
