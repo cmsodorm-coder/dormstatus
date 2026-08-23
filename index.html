@@ -36,7 +36,6 @@
       -moz-osx-font-smoothing: grayscale;
     }
 
-    /* Force all form controls to inherit the modern sans-serif font */
     button, input, select, textarea {
       font-family: var(--font-stack) !important;
       -webkit-font-smoothing: antialiased;
@@ -69,7 +68,6 @@
       display: block;
     }
 
-    /* Page 1: Dorm Selection */
     .dorm-options {
       display: flex;
       flex-direction: column;
@@ -148,7 +146,6 @@
       cursor: not-allowed;
     }
 
-    /* Page 2: Dashboard & Subtabs Header */
     .page-header {
       display: flex;
       justify-content: space-between;
@@ -216,7 +213,6 @@
       display: block;
     }
 
-    /* Filters Bar */
     .filter-bar {
       display: flex;
       align-items: center;
@@ -304,7 +300,6 @@
       background-color: #f0fdf4;
     }
 
-    /* Status Badges */
     .status-badge {
       display: inline-flex;
       padding: 4px 10px;
@@ -325,7 +320,6 @@
     .status-unclear       { background-color: #ffedd5; color: #9a3412; border-color: #fed7aa; }
     .status-default       { background-color: #f8fafc; color: #64748b; border-color: #e2e8f0; }
 
-    /* Bulk Action Bar */
     .bulk-bar {
       margin-top: 18px;
       padding: 16px;
@@ -353,7 +347,13 @@
       font-size: 0.9rem;
       outline: none;
       background: #fff;
-      transition: opacity 0.2s ease;
+      transition: all 0.2s ease;
+    }
+
+    .input-date.input-error {
+      border-color: #ef4444 !important;
+      background-color: #fef2f2 !important;
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
     }
 
     .select-status:disabled, .input-date:disabled {
@@ -434,7 +434,6 @@
         <button class="btn-back" onclick="navigateToSelection()">← เปลี่ยนหอพัก</button>
       </div>
 
-      <!-- Navigation Tabs -->
       <div class="tabs-nav">
         <button class="tab-btn active" id="tabBtn1" onclick="switchTab('tab-active-rooms')">Dashboard ห้องพักทั้งหมด (Active Status)</button>
         <button class="tab-btn" id="tabBtn2" onclick="switchTab('tab-update-status')">อัปเดตสถานะการซ่อม (Bulk Update)</button>
@@ -543,7 +542,7 @@
                 <th>รายละเอียด</th>
                 <th>สถานะปัจจุบัน</th>
                 <th style="min-width: 170px;">เลือกสถานะใหม่ (แต่ละแถว)</th>
-                <th style="min-width: 150px;">วันที่ช่างจะเข้าห้อง</th>
+                <th style="min-width: 150px;">วันที่ช่างจะเข้าห้อง <span style="color: #ef4444;">*</span></th>
               </tr>
             </thead>
             <tbody id="updateTableBody">
@@ -587,13 +586,14 @@
     const API_ENDPOINT = "https://script.google.com/macros/s/AKfycbxPW-8OMeJjTeuFnZa6_yIKG6GnMqlxmYnU6wnCif_fbpCAfRewV63c32G0U3jGyP-_JA/exec";
 
     function formatThaiDisplayDate(dateStr) {
-      if (!dateStr) return "-";
+      if (!dateStr) return "";
       try {
-        const parts = dateStr.split("-");
+        const clean = String(dateStr).trim();
+        const parts = clean.split("-");
         if (parts.length === 3) {
           const yr = parseInt(parts[0], 10);
           const thYr = yr > 2400 ? yr : yr + 543;
-          return `${parseInt(parts[2], 10)}/${parseInt(parts[1], 10)}/${thYr}`;
+          return `${parseInt(parts[2], 10)}/${parseInt(parts[1], 10)}/${String(thYr).slice(-2)}`;
         }
       } catch (e) {}
       return dateStr;
@@ -678,7 +678,7 @@
             ...item, 
             isChecked: false, 
             newStatus: '',
-            appointmentDate: item.appointmentDate || ''
+            appointmentDate: item.appointmentDate ? String(item.appointmentDate).trim() : ''
           }));
         }
 
@@ -744,8 +744,8 @@
       count.textContent = `พบ ${dataList.length} รายการ`;
       tbody.innerHTML = dataList.map(item => {
         let apptBadge = '';
-        if (item.activeStatus && item.activeStatus.includes('ช่างจะเข้าซ่อม') && item.appointmentDate) {
-          apptBadge = `<div style="font-size: 0.75rem; color: #9a3412; background: #ffedd5; padding: 2px 6px; border-radius: 4px; margin-top: 4px; display: inline-block; font-weight: 500;">📅 นัดหมาย: ${formatThaiDisplayDate(item.appointmentDate)}</div>`;
+        if (item.appointmentDate) {
+          apptBadge = `<div style="font-size: 0.75rem; color: #9a3412; background: #ffedd5; padding: 2px 8px; border-radius: 4px; margin-top: 4px; display: inline-block; font-weight: 600; border: 1px solid #fed7aa;">📅 ช่างเข้า: ${formatThaiDisplayDate(item.appointmentDate)}</div>`;
         }
 
         return `
@@ -806,12 +806,12 @@
       }
 
       tbody.innerHTML = dataList.map(item => {
-        const effectiveStatus = item.newStatus || item.activeStatus || '';
-        const isRepairActive = (item.isChecked && item.newStatus === 'ช่างจะเข้าซ่อมในห้อง') || (!item.newStatus && effectiveStatus.includes('ช่างจะเข้าซ่อม'));
+        const isRepairActive = item.isChecked && item.newStatus === 'ช่างจะเข้าซ่อมในห้อง';
+        const isMissingDate = isRepairActive && !item.appointmentDate;
         
         let apptBadge = '';
-        if (item.activeStatus && item.activeStatus.includes('ช่างจะเข้าซ่อม') && item.appointmentDate) {
-          apptBadge = `<div style="font-size: 0.75rem; color: #9a3412; margin-top: 2px;">📅 นัดหมายเดิม: ${formatThaiDisplayDate(item.appointmentDate)}</div>`;
+        if (item.appointmentDate && item.newStatus !== 'ช่างจะเข้าซ่อมในห้อง') {
+          apptBadge = `<div style="font-size: 0.75rem; color: #b45309; font-weight: 600; margin-top: 3px;">📅 นัดหมายเดิม: ${formatThaiDisplayDate(item.appointmentDate)}</div>`;
         }
 
         return `
@@ -840,7 +840,7 @@
             </select>
           </td>
           <td>
-            <input type="date" class="input-date row-date-input" data-id="${item.id}" value="${item.appointmentDate || ''}" ${!isRepairActive ? 'disabled' : ''} onchange="handleRowDateChange('${item.id}', this.value)">
+            <input type="date" id="date-input-${item.id}" class="input-date row-date-input ${isMissingDate ? 'input-error' : ''}" data-id="${item.id}" value="${item.appointmentDate || ''}" ${!isRepairActive ? 'disabled' : ''} onchange="handleRowDateChange('${item.id}', this.value)">
           </td>
         </tr>
       `}).join('');
@@ -868,17 +868,29 @@
         if (value && !target.isChecked) {
           target.isChecked = true;
         }
-        if (value !== 'ช่างจะเข้าซ่อมในห้อง') {
-          target.appointmentDate = '';
-        }
       }
       applyUpdateFilters();
+      
+      if (value === 'ช่างจะเข้าซ่อมในห้อง' && !target.appointmentDate) {
+        setTimeout(() => {
+          const dateInput = document.getElementById(`date-input-${id}`);
+          if (dateInput) dateInput.focus();
+        }, 50);
+      }
     }
 
     function handleRowDateChange(id, dateValue) {
       const target = activeRoomsData.find(i => String(i.id) === String(id));
       if (target) {
         target.appointmentDate = dateValue;
+      }
+      const inputEl = document.getElementById(`date-input-${id}`);
+      if (inputEl) {
+        if (dateValue) {
+          inputEl.classList.remove('input-error');
+        } else {
+          inputEl.classList.add('input-error');
+        }
       }
     }
 
@@ -901,6 +913,7 @@
       const bulkDateInput = document.getElementById('bulkDateInput');
       if (statusVal === 'ช่างจะเข้าซ่อมในห้อง') {
         bulkDateInput.style.display = 'inline-block';
+        bulkDateInput.focus();
       } else {
         bulkDateInput.style.display = 'none';
         bulkDateInput.value = '';
@@ -910,9 +923,6 @@
       activeRoomsData.forEach(item => {
         if (item.isChecked) {
           item.newStatus = statusVal;
-          if (statusVal !== 'ช่างจะเข้าซ่อมในห้อง') {
-            item.appointmentDate = '';
-          }
         }
       });
       applyUpdateFilters();
@@ -948,9 +958,16 @@
         return;
       }
 
-      const missingDate = checkedItems.find(item => item.newStatus === 'ช่างจะเข้าซ่อมในห้อง' && !item.appointmentDate);
-      if (missingDate) {
-        alert(`กรุณาระบุวันที่ช่างจะเข้าห้องสำหรับห้อง ${missingDate.roomNumber || ''}`);
+      // บังคับตรวจสอบ: ต้องมีวันที่สำหรับทุกห้องที่เลือก "ช่างจะเข้าซ่อมในห้อง"
+      const missingDateItem = checkedItems.find(item => item.newStatus === 'ช่างจะเข้าซ่อมในห้อง' && !item.appointmentDate);
+      if (missingDateItem) {
+        alert(`❌ ไม่สามารถบันทึกได้:\nกรุณาระบุ "วันที่ช่างจะเข้าห้อง" สำหรับห้อง ${missingDateItem.roomNumber || '-'}`);
+        
+        const errorInput = document.getElementById(`date-input-${missingDateItem.id}`);
+        if (errorInput) {
+          errorInput.classList.add('input-error');
+          errorInput.focus();
+        }
         return;
       }
 
