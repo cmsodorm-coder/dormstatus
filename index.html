@@ -586,6 +586,19 @@
 
     const API_ENDPOINT = "https://script.google.com/macros/s/AKfycbxPW-8OMeJjTeuFnZa6_yIKG6GnMqlxmYnU6wnCif_fbpCAfRewV63c32G0U3jGyP-_JA/exec";
 
+    function formatThaiDisplayDate(dateStr) {
+      if (!dateStr) return "-";
+      try {
+        const parts = dateStr.split("-");
+        if (parts.length === 3) {
+          const yr = parseInt(parts[0], 10);
+          const thYr = yr > 2400 ? yr : yr + 543;
+          return `${parseInt(parts[2], 10)}/${parseInt(parts[1], 10)}/${thYr}`;
+        }
+      } catch (e) {}
+      return dateStr;
+    }
+
     function formatDaysAgo(timestamp) {
       if (!timestamp) return '-';
       const ticketDate = new Date(timestamp);
@@ -665,7 +678,7 @@
             ...item, 
             isChecked: false, 
             newStatus: '',
-            appointmentDate: ''
+            appointmentDate: item.appointmentDate || ''
           }));
         }
 
@@ -729,7 +742,13 @@
       }
 
       count.textContent = `พบ ${dataList.length} รายการ`;
-      tbody.innerHTML = dataList.map(item => `
+      tbody.innerHTML = dataList.map(item => {
+        let apptBadge = '';
+        if (item.activeStatus && item.activeStatus.includes('ช่างจะเข้าซ่อม') && item.appointmentDate) {
+          apptBadge = `<div style="font-size: 0.75rem; color: #9a3412; background: #ffedd5; padding: 2px 6px; border-radius: 4px; margin-top: 4px; display: inline-block; font-weight: 500;">📅 นัดหมาย: ${formatThaiDisplayDate(item.appointmentDate)}</div>`;
+        }
+
+        return `
         <tr>
           <td><span style="font-size: 0.85rem; color: var(--text);">${formatDaysAgo(item.timestamp)}</span></td>
           <td><strong>${item.roomNumber || '-'}</strong></td>
@@ -739,9 +758,10 @@
             <span class="status-badge ${getBadgeClass(item.activeStatus)}">
               ${item.activeStatus || 'ไม่มีสถานะ'}
             </span>
+            ${apptBadge}
           </td>
         </tr>
-      `).join('');
+      `}).join('');
     }
 
     function toggleUpdateSort() {
@@ -786,7 +806,14 @@
       }
 
       tbody.innerHTML = dataList.map(item => {
-        const isRepairActive = item.isChecked && item.newStatus === 'ช่างจะเข้าซ่อมในห้อง';
+        const effectiveStatus = item.newStatus || item.activeStatus || '';
+        const isRepairActive = (item.isChecked && item.newStatus === 'ช่างจะเข้าซ่อมในห้อง') || (!item.newStatus && effectiveStatus.includes('ช่างจะเข้าซ่อม'));
+        
+        let apptBadge = '';
+        if (item.activeStatus && item.activeStatus.includes('ช่างจะเข้าซ่อม') && item.appointmentDate) {
+          apptBadge = `<div style="font-size: 0.75rem; color: #9a3412; margin-top: 2px;">📅 นัดหมายเดิม: ${formatThaiDisplayDate(item.appointmentDate)}</div>`;
+        }
+
         return `
         <tr id="row-${item.id}" class="${item.isChecked ? 'selected-row' : ''}">
           <td style="text-align: center;">
@@ -798,6 +825,7 @@
           <td>${item.detail || '-'}</td>
           <td>
             <span class="status-badge ${getBadgeClass(item.activeStatus)}">${item.activeStatus || '-'}</span>
+            ${apptBadge}
           </td>
           <td>
             <select class="select-status row-status-select" data-id="${item.id}" ${!item.isChecked ? 'disabled' : ''} onchange="handleRowStatusChange('${item.id}', this.value)">
@@ -828,7 +856,6 @@
         target.isChecked = cb.checked;
         if (!cb.checked) {
           target.newStatus = '';
-          target.appointmentDate = '';
         }
       }
       applyUpdateFilters();
@@ -849,7 +876,7 @@
     }
 
     function handleRowDateChange(id, dateValue) {
-      const target = activeRoomsData.find(i => String(i.id) === id);
+      const target = activeRoomsData.find(i => String(i.id) === String(id));
       if (target) {
         target.appointmentDate = dateValue;
       }
@@ -864,7 +891,6 @@
           item.isChecked = masterCb.checked;
           if (!masterCb.checked) {
             item.newStatus = '';
-            item.appointmentDate = '';
           }
         }
       });
