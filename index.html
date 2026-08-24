@@ -770,43 +770,38 @@
     }
 
     function formatDaysAgo(timestamp) {
-      if (!timestamp) return '-';
-      const clean = String(timestamp).replace(/^SENT\s*\(\s*/i, "").replace(/\)$/, "").trim();
-      let parts = clean.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-      let ticketDate;
-      if (parts) {
-        let yr = parseInt(parts[3], 10);
-        if (yr > 2400) yr -= 543;
-        ticketDate = new Date(yr, parseInt(parts[2], 10) - 1, parseInt(parts[1], 10));
-      } else {
-        ticketDate = new Date(clean);
-      }
+  if (!timestamp) return '-';
+  const ms = parseToMillis(timestamp);
+  if (!ms) return String(timestamp).replace(/^SENT\s*\(\s*/i, "").replace(/\)$/, "").trim();
 
-      if (isNaN(ticketDate.getTime())) return String(timestamp);
+  const ticketDate = new Date(ms);
+  const d = ticketDate.getDate();
+  const m = ticketDate.getMonth() + 1;
+  const yr = ticketDate.getFullYear();
+  const thYear = yr > 2400 ? yr : yr + 543;
+  const yrShort = String(thYear).slice(-2);
+  const dateStr = `${d}/${m}/${yrShort}`;
 
-      const d = ticketDate.getDate();
-      const m = ticketDate.getMonth() + 1;
-      let yr = ticketDate.getFullYear();
-      let thYear = yr > 2400 ? yr : yr + 543;
-      let yrShort = String(thYear).slice(-2);
-      const dateStr = `${d}/${m}/${yrShort}`;
+  // Compare calendar days, not raw ms, so a same-day submission always reads "วันนี้"
+  // regardless of what time of day it happened.
+  const now = new Date();
+  const startOfTicketDay = new Date(ticketDate.getFullYear(), ticketDate.getMonth(), ticketDate.getDate());
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const diffDays = Math.round((startOfToday - startOfTicketDay) / (1000 * 60 * 60 * 24));
 
-      const now = new Date();
-      const diffMs = now.getTime() - ticketDate.getTime();
-      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-      let agoStr = diffDays <= 0 ? 'วันนี้' : `${diffDays} วันที่แล้ว`;
-      return `<div style="white-space: nowrap; font-weight: 500;">${dateStr}</div><div style="white-space: nowrap; font-size: 0.75rem; color: #94a3b8; margin-top: 2px;">${agoStr}</div>`;
-    }
+  const agoStr = diffDays <= 0 ? 'วันนี้' : `${diffDays} วันที่แล้ว`;
+  return `<div style="white-space: nowrap; font-weight: 500;">${dateStr}</div><div style="white-space: nowrap; font-size: 0.75rem; color: #94a3b8; margin-top: 2px;">${agoStr}</div>`;
+}
 
     // NEW: computes "days used to repair" = สำเร็จ timestamp - กำลังดำเนินการ timestamp
     // Requires the backend (Apps Script getDormSummaryList) to return
     // item.inProgressTimestamp and item.completedTimestamp — see accompanying .gs edit.
     function formatRepairDuration(item) {
-      const startRaw = item.inProgressTimestamp;
+  // Fall back to the original submission timestamp if "กำลังดำเนินการ" was skipped
+      const startRaw = item.inProgressTimestamp || item.timestamp;
       const endRaw = item.completedTimestamp;
 
-      if (!startRaw || !endRaw) {
+    if (!startRaw || !endRaw) {
         return '<span style="color: var(--text-muted); font-size: 0.85rem;">-</span>';
       }
 
