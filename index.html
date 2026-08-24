@@ -652,7 +652,7 @@
               </th>
               
               <!-- Squeezed Central Columns -->
-              <th><div class="cell-squeeze" id="dateHeaderTitle">วันที่อัปเดต</div></th>
+              <th><div class="cell-squeeze" id="dateHeaderTitle">วันที่แจ้ง</div></th>
               <th><div class="cell-squeeze">ห้อง</div></th>
               <th><div class="cell-squeeze">หมวดหมู่ / ปัญหา</div></th>
               <th><div class="cell-squeeze">รายละเอียด</div></th>
@@ -799,6 +799,30 @@
       return `<div style="white-space: nowrap; font-weight: 500;">${dateStr}</div><div style="white-space: nowrap; font-size: 0.75rem; color: #94a3b8; margin-top: 2px;">${agoStr}</div>`;
     }
 
+    // NEW: computes "days used to repair" = สำเร็จ timestamp - กำลังดำเนินการ timestamp
+    // Requires the backend (Apps Script getDormSummaryList) to return
+    // item.inProgressTimestamp and item.completedTimestamp — see accompanying .gs edit.
+    function formatRepairDuration(item) {
+      const startRaw = item.inProgressTimestamp;
+      const endRaw = item.completedTimestamp;
+
+      if (!startRaw || !endRaw) {
+        return '<span style="color: var(--text-muted); font-size: 0.85rem;">-</span>';
+      }
+
+      const startMs = parseToMillis(startRaw);
+      const endMs = parseToMillis(endRaw);
+
+      if (!startMs || !endMs) {
+        return '<span style="color: var(--text-muted); font-size: 0.85rem;">-</span>';
+      }
+
+      const diffDays = Math.max(0, Math.round((endMs - startMs) / (1000 * 60 * 60 * 24)));
+      const label = diffDays === 0 ? 'น้อยกว่า 1 วัน' : `${diffDays} วัน`;
+
+      return `<div style="font-weight: 500;">${label}</div>`;
+    }
+
     function getBadgeClass(status) {
       if (!status) return 'status-default';
       const s = status.trim();
@@ -861,18 +885,22 @@
       const tab2 = document.getElementById('tabBtn2');
       const tab3 = document.getElementById('tabBtn3');
       const container = document.getElementById('main-table-container');
+      const dateHeader = document.getElementById('dateHeaderTitle');
 
       [tab1, tab2, tab3].forEach(b => b.classList.remove('active'));
 
       if (mode === 'active') {
         tab1.classList.add('active');
         container.classList.remove('mode-update');
+        dateHeader.textContent = 'วันที่แจ้ง';
       } else if (mode === 'bulk') {
         tab2.classList.add('active');
         container.classList.add('mode-update');
+        dateHeader.textContent = 'วันที่แจ้ง';
       } else if (mode === 'completed') {
         tab3.classList.add('active');
         container.classList.remove('mode-update');
+        dateHeader.textContent = 'จำนวนวันที่ใช้ซ่อม';
       }
 
       updateStatusFilterDropdown();
@@ -1049,6 +1077,12 @@
           apptBadge = `<div style="font-size: 0.72rem; color: #9a3412; background: #ffedd5; padding: 2px 6px; border-radius: 4px; margin-top: 4px; display: inline-block; font-weight: 600; border: 1px solid #fed7aa; white-space: nowrap;">📅 นัดล่าสุด: ${formatThaiDisplayDate(item.appointmentDate)}</div>`;
         }
 
+        // NEW: first column shows repair duration on the Completed tab,
+        // otherwise shows the submission date + days-ago (unchanged behavior)
+        const firstColContent = currentMode === 'completed'
+          ? formatRepairDuration(item)
+          : formatDaysAgo(item.timestamp);
+
         return `
         <tr id="row-${item.id}" class="${item.isChecked && currentMode === 'bulk' ? 'selected-row' : ''}">
           <!-- Left Edge Slide-In Checkbox -->
@@ -1059,7 +1093,7 @@
           </td>
 
           <!-- Squeezed Central Columns -->
-          <td><div class="cell-squeeze"><span style="font-size: 0.85rem; color: var(--text);">${formatDaysAgo(item.timestamp)}</span></div></td>
+          <td><div class="cell-squeeze"><span style="font-size: 0.85rem; color: var(--text);">${firstColContent}</span></div></td>
           <td><div class="cell-squeeze"><strong>${item.roomNumber || '-'}</strong></div></td>
           <td><div class="cell-squeeze">${item.category || '-'}</div></td>
           <td><div class="cell-squeeze" title="${item.detail || ''}">${item.detail || '-'}</div></td>
