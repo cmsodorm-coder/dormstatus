@@ -1,3 +1,347 @@
+Pasted code (2).js
+JavaScript
+Pasted text (2).txt
+Document
+This is the code for problem status editing web and google script, i want to change the first column in "Dashboard ห้องพักทั้งหมด (Active)" from "วันที่อัปเดต" to "วันที่แจ้ง": date that the form was submitted and number of days past. Besides, in "รายการที่สําเร็จแล้ว (Completed)" change first column to "จํานวนวันที่ใช้ซ่อม": number of days between กําลังดําเนินการ and สําเร็จ. do i need to edit json in google script as well
+
+Yes — you need to edit the frontend HTML/JS, but you do not necessarily need to change the Google Apps Script JSON structure.
+
+I checked both files. Your current architecture is:
+
+Google Apps Script → JSON API → Vercel/frontend HTML → table
+
+The Apps Script already returns the original submission timestamp as timestamp: row[0] and the status history containing each status timestamp.
+
+So the important part is changing how the frontend displays/calculates those values.
+
+What you want
+Tab	First column header	What it should show
+Dashboard ห้องพักทั้งหมด (Active)	วันที่แจ้ง	Form submission date + number of days since submission
+รายการที่สำเร็จแล้ว (Completed)	จำนวนวันที่ใช้ซ่อม	Number of days between กำลังดำเนินการ and สำเร็จ
+
+Your current frontend already displays the first column using item.timestamp and formatDaysAgo(item.timestamp).
+
+And formatDaysAgo() already calculates the number of days from the timestamp to today.
+
+So Active is very easy to change.
+
+1. Active tab: change วันที่อัปเดต → วันที่แจ้ง
+
+Currently you have:
+
+<th><div class="cell-squeeze" id="dateHeaderTitle">วันที่อัปเดต</div></th>
+
+Change it to:
+
+<th><div class="cell-squeeze" id="dateHeaderTitle">วันที่แจ้ง</div></th>
+
+Then your existing:
+
+formatDaysAgo(item.timestamp)
+
+is already using the form submission timestamp, because Apps Script returns:
+
+timestamp: row[0] || "-"
+
+So you don't need to change the Apps Script for this part.
+
+It will show something like:
+
+24/8/26
+3 วันที่แล้ว
+
+2. Completed tab: จำนวนวันที่ใช้ซ่อม
+
+This part does require frontend JavaScript changes.
+
+Your Apps Script already sends statusHistory, including:
+
+{
+  status: statusName,
+  timestamp: cleanTime
+}
+
+for every recorded status.
+
+Therefore, we can find:
+
+กำลังดำเนินการ
+        ↓
+    calculate
+        ↓
+สำเร็จ
+
+For example:
+
+กำลังดำเนินการ: 20/08/2026 10:00
+สำเร็จ:         23/08/2026 15:00
+
+จำนวนวันที่ใช้ซ่อม = 3 วัน
+Important detail
+
+I would calculate this from the status timestamps, rather than adding another column to Google Sheets.
+
+Your Apps Script records the status timestamp whenever a status is updated.
+
+Therefore:
+
+You do NOT need to modify the JSON manually.
+
+The JSON already contains the information required.
+
+3. Add this function to the frontend
+
+Add this near formatDaysAgo():
+
+function calculateRepairDays(item) {
+  if (!item || !Array.isArray(item.statusHistory)) return '-';
+
+  const inProgress = item.statusHistory.find(
+    s => String(s.status || '').includes('กำลังดำเนินการ')
+  );
+
+  const completed = item.statusHistory.find(
+    s => String(s.status || '').includes('สำเร็จ')
+  );
+
+  if (!inProgress || !completed) return '-';
+
+  const start = parseToMillis(inProgress.timestamp);
+  const end = parseToMillis(completed.timestamp);
+
+  if (!start || !end || end < start) return '-';
+
+  const diffMs = end - start;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  return `${diffDays} วัน`;
+}
+
+This uses your existing parseToMillis() function, which already handles multiple date formats.
+
+4. Change the table header dynamically
+
+Right now the header is always:
+
+วันที่อัปเดต
+
+I'd actually recommend making it dynamic depending on the tab.
+
+Change:
+
+<th><div class="cell-squeeze" id="dateHeaderTitle">วันที่อัปเดต</div></th>
+
+to:
+
+<th><div class="cell-squeeze" id="dateHeaderTitle">วันที่แจ้ง</div></th>
+
+Then inside renderTable() add:
+
+const dateHeaderTitle = document.getElementById('dateHeaderTitle');
+
+if (currentMode === 'completed') {
+  dateHeaderTitle.textContent = 'จำนวนวันที่ใช้ซ่อม';
+} else {
+  dateHeaderTitle.textContent = 'วันที่แจ้ง';
+}
+
+So:
+
+Active
+
+วันที่แจ้ง | ห้อง | หมวดหมู่ / ปัญหา | ...
+
+Completed
+
+จำนวนวันที่ใช้ซ่อม | ห้อง | หมวดหมู่ / ปัญหา | ...
+5. Change the actual first-column value
+
+Currently you have:
+
+<td><div class="cell-squeeze">
+  <span style="font-size: 0.85rem; color: var(--text);">
+    ${formatDaysAgo(item.timestamp)}
+  </span>
+</div></td>
+
+Change that section to:
+
+<td>
+  <div class="cell-squeeze">
+    <span style="font-size: 0.85rem; color: var(--text);">
+      ${currentMode === 'completed'
+        ? calculateRepairDays(item)
+        : formatDaysAgo(item.timestamp)}
+    </span>
+  </div>
+</td>
+
+Now the same column behaves differently depending on the selected tab.
+
+6. Do you need to change Google Apps Script JSON?
+No, not for this change.
+
+Your existing JSON already contains:
+
+{
+  timestamp: row[0],
+  ...
+  statusHistory: statusHistory
+}
+
+and statusHistory contains the timestamps of statuses such as:
+
+กำลังดำเนินการ
+สำเร็จ
+
+So the frontend can calculate the duration itself.
+
+Your existing API request also simply fetches the dorm data:
+
+fetch(`${API_ENDPOINT}?dorm=${encodeURIComponent(currentDorm)}`)
+
+and receives that JSON.
+
+Therefore:
+Google Form
+    ↓
+Google Sheet
+    ↓
+Google Apps Script
+    ↓
+JSON
+    ↓
+Frontend
+       ├── Active → timestamp → วันที่แจ้ง + X วันที่แล้ว
+       │
+       └── Completed → statusHistory
+                         ├── กำลังดำเนินการ
+                         └── สำเร็จ
+                              ↓
+                       X วันใช้ซ่อม
+
+No JSON schema change is necessary.
+
+One thing I would change
+
+There is one subtle issue: your statusHistory can theoretically contain multiple กำลังดำเนินการ entries if staff changes status back and forth. The code above uses the first one.
+
+If what you actually mean is:
+
+จำนวนวันที่ใช้ซ่อม = from the first time "กำลังดำเนินการ" until the final "สำเร็จ"
+
+then the above is correct.
+
+If instead you mean:
+
+from the most recent "กำลังดำเนินการ" immediately preceding "สำเร็จ"
+
+then I would change the calculation slightly.
+
+I recommend the first interpretation for a repair-duration statistic.
+
+So overall, you only need to edit Pasted text (2).txt (the frontend), not the Google Apps Script, assuming you want to calculate the duration in the browser.
+
+it's actually
+Google Form
+    ↓
+Google Sheet
+    ↓
+Google Apps Script
+    ↓
+JSON
+    ↓
+Frontend
+       ├── Active → timestamp → วันที่แจ้ง + X วันที่แล้ว
+       │
+       └── Completed → statusHistory
+                                               └── สำเร็จ
+                                                            ↓
+                                                   X วันใช้ซ่อม
+
+and write all html code again including your edit without changing or deleting any unrelated code
+
+Yes — your corrected flow is right:
+
+Google Form
+    ↓
+Google Sheet
+    ↓
+Google Apps Script
+    ↓
+JSON
+    ↓
+Frontend
+       ├── Active → timestamp → วันที่แจ้ง + X วันที่แล้ว
+       │
+       └── Completed → statusHistory → สำเร็จ
+                                      ↓
+                              X วันใช้ซ่อม
+
+And this actually makes the change simpler: for Completed, we only need the สำเร็จ timestamp from statusHistory, then calculate:
+
+จำนวนวันที่ใช้ซ่อม = วันที่สำเร็จ − วันที่แจ้ง
+
+I checked your existing frontend code and Apps Script structure. Your Apps Script already sends both timestamp and statusHistory, so you do not need to change the JSON or Google Apps Script.
+
+However, I can't safely reproduce the entire HTML file byte-for-byte from the partial file excerpts currently available to me without risking deleting unrelated code—which is exactly what you asked me not to do.
+
+The file search has exposed the relevant portions, including renderTable(), formatDaysAgo(), switchMode(), and the bulk-update functions, but not the complete HTML/CSS from beginning to end.
+
+What I need from you
+
+Please re-upload/paste the complete HTML file (the one currently named Pasted text (2).txt).
+
+Then I can return one complete copy-paste-ready HTML file, with only these changes:
+
+วันที่อัปเดต → วันที่แจ้ง
+Active first column:
+displays the form submission date
+displays X วันที่แล้ว
+Completed first column:
+header becomes จำนวนวันที่ใช้ซ่อม
+calculates สำเร็จ timestamp − form submission timestamp
+displays e.g. 4 วัน
+Keep every other HTML/CSS/JS function exactly as it is
+No changes to your Google Apps Script / JSON
+Keep the existing Active, Bulk Update, Completed filtering, sorting, appointment-date system, authentication, email-related functionality, etc.
+
+One important correction from my previous answer: based on your clarified requirement, Completed should use timestamp → สำเร็จ timestamp, not กำลังดำเนินการ → สำเร็จ.
+
+Pasted code.html
+File
+
+Yes. I used your complete 1,262-line HTML file and made only the requested changes; the unrelated HTML/CSS/JS was preserved.
+
+Changes made
+
+Active — Dashboard ห้องพักทั้งหมด
+
+วันที่อัปเดต → วันที่แจ้ง
+Uses the original timestamp from the Google Form.
+Still displays:
+24/8/26
+3 วันที่แล้ว
+
+Completed — รายการที่สำเร็จแล้ว
+
+First-column header → จำนวนวันที่ใช้ซ่อม
+Finds the สำเร็จ entry in statusHistory.
+Calculates:
+วันที่สำเร็จ − วันที่แจ้ง
+Example:
+Form submitted: 20/8
+Status สำเร็จ: 23/8
+Shows 3 วัน
+
+I did not change your Google Apps Script or JSON, because the existing data already contains timestamp and statusHistory. Your existing frontend also already receives the JSON through /api/data.
+
+Updated complete HTML
+
+Download the complete updated HTML
+
+The resulting file contains all 1,290 lines, with the extra lines being only the new calculation/header logic. 
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -652,7 +996,7 @@
               </th>
               
               <!-- Squeezed Central Columns -->
-              <th><div class="cell-squeeze" id="dateHeaderTitle">วันที่อัปเดต</div></th>
+              <th><div class="cell-squeeze" id="dateHeaderTitle">วันที่แจ้ง</div></th>
               <th><div class="cell-squeeze">ห้อง</div></th>
               <th><div class="cell-squeeze">หมวดหมู่ / ปัญหา</div></th>
               <th><div class="cell-squeeze">รายละเอียด</div></th>
@@ -799,6 +1143,27 @@
       return `<div style="white-space: nowrap; font-weight: 500;">${dateStr}</div><div style="white-space: nowrap; font-size: 0.75rem; color: #94a3b8; margin-top: 2px;">${agoStr}</div>`;
     }
 
+    function getCompletedDays(item) {
+      if (!item || !item.timestamp || !Array.isArray(item.statusHistory)) return '-';
+
+      const completedEntry = item.statusHistory.find(s =>
+        String(s.status || '').trim().includes('สำเร็จ')
+      );
+
+      if (!completedEntry || !completedEntry.timestamp) return '-';
+
+      const submittedTime = parseToMillis(item.timestamp);
+      const completedTime = parseToMillis(completedEntry.timestamp);
+
+      if (!submittedTime || !completedTime || completedTime < submittedTime) return '-';
+
+      const diffDays = Math.floor(
+        (completedTime - submittedTime) / (1000 * 60 * 60 * 24)
+      );
+
+      return `${diffDays} วัน`;
+    }
+
     function getBadgeClass(status) {
       if (!status) return 'status-default';
       const s = status.trim();
@@ -861,6 +1226,13 @@
       const tab2 = document.getElementById('tabBtn2');
       const tab3 = document.getElementById('tabBtn3');
       const container = document.getElementById('main-table-container');
+      const dateHeaderTitle = document.getElementById('dateHeaderTitle');
+
+      if (dateHeaderTitle) {
+        dateHeaderTitle.textContent = mode === 'completed'
+          ? 'จำนวนวันที่ใช้ซ่อม'
+          : 'วันที่แจ้ง';
+      }
 
       [tab1, tab2, tab3].forEach(b => b.classList.remove('active'));
 
@@ -1059,7 +1431,7 @@
           </td>
 
           <!-- Squeezed Central Columns -->
-          <td><div class="cell-squeeze"><span style="font-size: 0.85rem; color: var(--text);">${formatDaysAgo(item.timestamp)}</span></div></td>
+          <td><div class="cell-squeeze"><span style="font-size: 0.85rem; color: var(--text);">${currentMode === 'completed' ? getCompletedDays(item) : formatDaysAgo(item.timestamp)}</span></div></td>
           <td><div class="cell-squeeze"><strong>${item.roomNumber || '-'}</strong></div></td>
           <td><div class="cell-squeeze">${item.category || '-'}</div></td>
           <td><div class="cell-squeeze" title="${item.detail || ''}">${item.detail || '-'}</div></td>
@@ -1260,3 +1632,5 @@
   </script>
 </body>
 </html>
+Pasted_text_2_updated.html
+HTML
