@@ -775,15 +775,14 @@
   if (!ms) return String(timestamp).replace(/^SENT\s*\(\s*/i, "").replace(/\)$/, "").trim();
 
   const ticketDate = new Date(ms);
-  const d = ticketDate.getDate();
-  const m = ticketDate.getMonth() + 1;
+  // Pad single digits with leading zeros (e.g., 02/09/69)
+  const d = String(ticketDate.getDate()).padStart(2, '0');
+  const m = String(ticketDate.getMonth() + 1).padStart(2, '0');
   const yr = ticketDate.getFullYear();
   const thYear = yr > 2400 ? yr : yr + 543;
   const yrShort = String(thYear).slice(-2);
   const dateStr = `${d}/${m}/${yrShort}`;
 
-  // Compare calendar days, not raw ms, so a same-day submission always reads "วันนี้"
-  // regardless of what time of day it happened.
   const now = new Date();
   const startOfTicketDay = new Date(ticketDate.getFullYear(), ticketDate.getMonth(), ticketDate.getDate());
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -932,6 +931,7 @@
       let s = String(val).replace(/^SENT\s*\(\s*/i, "").replace(/\)$/, "").trim();
       if (s.includes("|")) s = s.split("|")[0].trim();
 
+      // 1. ISO format (YYYY-MM-DD or YYYY/MM/DD)
       const iso = s.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[T\s](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
       if (iso) {
         let y = parseInt(iso[1], 10);
@@ -939,6 +939,8 @@
         return new Date(y, parseInt(iso[2], 10) - 1, parseInt(iso[3], 10), parseInt(iso[4] || 0), parseInt(iso[5] || 0), parseInt(iso[6] || 0)).getTime();
       }
 
+      // 2. Google Form / Sheet default format: M/D/YYYY (e.g. 9/2/2026 1:35:45)
+      // or DD/MM/YYYY when first value > 12
       const slash = s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})(?:[T\s](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
       if (slash) {
         const p1 = parseInt(slash[1], 10);
@@ -946,15 +948,28 @@
         let yr = parseInt(slash[3], 10);
         if (yr < 100) yr += 2000;
         if (yr > 2400) yr -= 543;
-        let d = p1, m = p2 - 1;
-        if (p1 > 12 && p2 <= 12) { d = p1; m = p2 - 1; }
-        else if (p2 > 12 && p1 <= 12) { d = p2; m = p1 - 1; }
-        return new Date(yr, m, d, parseInt(slash[4] || 0), parseInt(slash[5] || 0), parseInt(slash[6] || 0)).getTime();
-      }
 
-      const d = new Date(s);
-      return isNaN(d.getTime()) ? 0 : d.getTime();
-    }
+        let d, m;
+        if (p1 > 12) {
+          // First number > 12 -> must be Day (DD/MM/YYYY)
+          d = p1;
+          m = p2 - 1;
+        } else if (p2 > 12) {
+          // Second number > 12 -> must be Day (MM/DD/YYYY)
+          m = p1 - 1;
+          d = p2;
+        } else {
+          // Default Google Sheets raw export is M/D/YYYY
+          m = p1 - 1;
+          d = p2;
+        }
+
+        return new Date(yr, m, d, parseInt(slash[4] || 0), parseInt(slash[5] || 0), parseInt(slash[6] || 0)).getTime();
+        }
+
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? 0 : d.getTime();
+}
 
     function compareTimestamps(a, b, order = 'asc') {
       const timeA = parseToMillis(a.timestamp);
